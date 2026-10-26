@@ -124,6 +124,76 @@ class LifeBridgeViewModel(application: Application) : AndroidViewModel(applicati
     private val _snackbarMessage = MutableSharedFlow<String>()
     val snackbarMessage = _snackbarMessage.asSharedFlow()
 
+    // Chatbot Repository & State
+    private val chatbotRepository = com.example.data.repository.ChatbotRepository(application.applicationContext)
+
+    private val _isChatbotOpen = MutableStateFlow(false)
+    val isChatbotOpen: StateFlow<Boolean> = _isChatbotOpen.asStateFlow()
+
+    private val _isChatbotThinking = MutableStateFlow(false)
+    val isChatbotThinking: StateFlow<Boolean> = _isChatbotThinking.asStateFlow()
+
+    private val _chatbotOffsetX = MutableStateFlow(0f)
+    val chatbotOffsetX: StateFlow<Float> = _chatbotOffsetX.asStateFlow()
+
+    private val _chatbotOffsetY = MutableStateFlow(0f)
+    val chatbotOffsetY: StateFlow<Float> = _chatbotOffsetY.asStateFlow()
+
+    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(
+        listOf(
+            ChatMessage(
+                text = "Hello! I am your LIFEBridge Assistant. I can help you decode complex documents, verify potential scams, translate conversations live, or organize your emergency kits. How can I help you today?",
+                sender = MessageSender.ASSISTANT
+            )
+        )
+    )
+    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
+
+    fun toggleChatbot(open: Boolean) {
+        _isChatbotOpen.value = open
+    }
+
+    fun updateChatbotPosition(dx: Float, dy: Float) {
+        _chatbotOffsetX.value = (_chatbotOffsetX.value + dx).coerceIn(-300f, 300f)
+        _chatbotOffsetY.value = (_chatbotOffsetY.value + dy).coerceIn(-600f, 200f)
+    }
+
+    fun setChatbotPosition(x: Float, y: Float) {
+        _chatbotOffsetX.value = x
+        _chatbotOffsetY.value = y
+    }
+
+    fun clearChatMessages() {
+        _chatMessages.value = listOf(
+            ChatMessage(
+                text = "Chat history refreshed. How can I help you now?",
+                sender = MessageSender.ASSISTANT
+            )
+        )
+    }
+
+    fun sendChatMessage(text: String) {
+        if (text.isBlank()) return
+        val userMsg = ChatMessage(text = text.trim(), sender = MessageSender.USER)
+        _chatMessages.value = _chatMessages.value + userMsg
+        _isChatbotThinking.value = true
+
+        viewModelScope.launch {
+            try {
+                val assistantMsg = chatbotRepository.getAssistantResponse(text, _chatMessages.value)
+                _chatMessages.value = _chatMessages.value + assistantMsg
+            } catch (e: Exception) {
+                _chatMessages.value = _chatMessages.value + ChatMessage(
+                    text = "I encountered an issue processing your request. Please try again.",
+                    sender = MessageSender.ASSISTANT,
+                    isError = true
+                )
+            } finally {
+                _isChatbotThinking.value = false
+            }
+        }
+    }
+
     // Text to Speech
     private var textToSpeech: TextToSpeech? = null
     private var isTtsReady = false

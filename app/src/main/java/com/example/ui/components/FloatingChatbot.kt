@@ -1,0 +1,673 @@
+package com.example.ui.components
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.data.model.ChatMessage
+import com.example.data.model.MessageSender
+import com.example.ui.theme.*
+import com.example.viewmodel.LifeBridgeViewModel
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+
+@Composable
+fun FloatingChatbotOverlay(
+    viewModel: LifeBridgeViewModel,
+    onNavigate: (String) -> Unit
+) {
+    val isOpen by viewModel.isChatbotOpen.collectAsState()
+    val offsetX by viewModel.chatbotOffsetX.collectAsState()
+    val offsetY by viewModel.chatbotOffsetY.collectAsState()
+
+    // Breathing pulse animation for cool AI icon halo
+    val infiniteTransition = rememberInfiniteTransition(label = "chatbot_pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse_scale"
+    )
+    val haloAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.55f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "halo_alpha"
+    )
+
+    val isDark = MaterialTheme.colorScheme.background == UmbraDarkBg
+
+    // Floating Draggable Chatbot Orb
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.BottomEnd
+    ) {
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        viewModel.updateChatbotPosition(dragAmount.x, dragAmount.y)
+                    }
+                }
+                .testTag("chatbot_floating_button"),
+            contentAlignment = Alignment.Center
+        ) {
+            // Pulsing Glacier Ambient Glow Halo
+            Box(
+                modifier = Modifier
+                    .size(68.dp)
+                    .scale(pulseScale)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.radialGradient(
+                            listOf(
+                                Color(0xFF8CE8FF).copy(alpha = haloAlpha),
+                                Color(0xFFD69EFF).copy(alpha = haloAlpha * 0.7f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+
+            // 3D Liquid Crystal Spherical Chatbot Button
+            Box(
+                modifier = Modifier
+                    .size(58.dp)
+                    .shadow(
+                        elevation = 12.dp,
+                        shape = CircleShape,
+                        spotColor = Color(0x6600C6FF),
+                        ambientColor = Color(0x448A2BE2)
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        brush = if (isDark) {
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFF2C2D38),
+                                    Color(0xFF1B1C24),
+                                    Color(0xFF12131A)
+                                ),
+                                start = Offset(0f, 0f),
+                                end = Offset(120f, 120f)
+                            )
+                        } else {
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFF8CE8FF),
+                                    Color(0xFFFFB28E),
+                                    Color(0xFFD69EFF)
+                                ),
+                                start = Offset(0f, 0f),
+                                end = Offset(120f, 120f)
+                            )
+                        }
+                    )
+                    .border(
+                        width = 1.6.dp,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color.White.copy(alpha = 0.95f),
+                                Color.White.copy(alpha = 0.30f),
+                                Color(0xFF8CE8FF).copy(alpha = 0.60f)
+                            )
+                        ),
+                        shape = CircleShape
+                    )
+                    .clickable { viewModel.toggleChatbot(true) },
+                contentAlignment = Alignment.Center
+            ) {
+                // Top-lit 3D glass spherical highlight
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.48f)
+                        .align(Alignment.TopCenter)
+                        .clip(RoundedCornerShape(topStart = 29.dp, topEnd = 29.dp))
+                        .background(
+                            brush = Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.45f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                // High-Tech AI Neural Crystal Icon
+                Icon(
+                    imageVector = Icons.Filled.AutoAwesome,
+                    contentDescription = "LIFEBridge Assistant",
+                    tint = if (isDark) Color(0xFF8CE8FF) else Color(0xFF1C1D24),
+                    modifier = Modifier
+                        .size(28.dp)
+                        .scale(pulseScale)
+                )
+
+                // Small active sparkle indicator
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-4).dp, y = 4.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF00E676))
+                        .border(1.5.dp, Color.White, CircleShape)
+                )
+            }
+        }
+    }
+
+    // Liquid Glass Chatbot Dialog Sheet
+    if (isOpen) {
+        LiquidGlassChatbotSheet(
+            viewModel = viewModel,
+            onDismiss = { viewModel.toggleChatbot(false) },
+            onNavigate = { route ->
+                viewModel.toggleChatbot(false)
+                onNavigate(route)
+            }
+        )
+    }
+}
+
+@Composable
+fun LiquidGlassChatbotSheet(
+    viewModel: LifeBridgeViewModel,
+    onDismiss: () -> Unit,
+    onNavigate: (String) -> Unit
+) {
+    val messages by viewModel.chatMessages.collectAsState()
+    val isThinking by viewModel.isChatbotThinking.collectAsState()
+    var inputText by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val isDark = MaterialTheme.colorScheme.background == UmbraDarkBg
+
+    // Auto-scroll on new messages
+    LaunchedEffect(messages.size, isThinking) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.55f))
+                .clickable { onDismiss() }
+                .padding(horizontal = 12.dp, vertical = 24.dp)
+                .testTag("chatbot_dialog"),
+            contentAlignment = Alignment.Center
+        ) {
+            // Liquid Glass Dialog Container
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.88f)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        if (isDark) Color(0xF21C1C22) else Color(0xF4FFFFFF)
+                    )
+                    .border(
+                        width = 1.5.dp,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color.White.copy(alpha = if (isDark) 0.55f else 0.95f),
+                                Color(0xFF8CE8FF).copy(alpha = 0.30f),
+                                Color.White.copy(alpha = 0.10f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(28.dp)
+                    )
+                    .clickable(enabled = false) {} // Prevent click-through to dismiss
+                    .padding(top = 16.dp, bottom = 12.dp)
+            ) {
+                // Header: Glacier Liquid Bar with Title, Controls & Relocate Anchors
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Color(0xFF8CE8FF), Color(0xFFD69EFF))
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.AutoAwesome,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "LIFEBridge Assistant",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF00E676))
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "Ready to Help in Everything",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    // Top Action Buttons (Reposition & Close)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { viewModel.clearChatMessages() },
+                            modifier = Modifier.size(34.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Refresh,
+                                contentDescription = "Clear Chat",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(34.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Close",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Drag & Position Anchor Bar ("tap to select here to another place")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Anchor Bubble:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        PositionChip("Top Left") { viewModel.setChatbotPosition(-250f, -480f) }
+                        PositionChip("Top Right") { viewModel.setChatbotPosition(0f, -480f) }
+                        PositionChip("Bottom Left") { viewModel.setChatbotPosition(-250f, 0f) }
+                        PositionChip("Bottom Right") { viewModel.setChatbotPosition(0f, 0f) }
+                    }
+                }
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                // Quick Prompt Suggestion Chips
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val promptSuggestions = listOf(
+                        "🛡️ Is this SMS a scam?",
+                        "📄 How do I scan a hospital bill?",
+                        "🗣️ Start live voice translation",
+                        "⏰ Remind me about scholarship deadlines",
+                        "🆘 Open emergency life kit"
+                    )
+                    items(promptSuggestions) { prompt ->
+                        SuggestionChip(
+                            onClick = {
+                                viewModel.sendChatMessage(prompt)
+                            },
+                            label = { Text(prompt, fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                containerColor = if (isDark) Color(0x33FFFFFF) else Color(0x15000000)
+                            ),
+                            border = SuggestionChipDefaults.suggestionChipBorder(
+                                enabled = true,
+                                borderColor = Color(0xFF8CE8FF).copy(alpha = 0.35f)
+                            )
+                        )
+                    }
+                }
+
+                // Chat Messages Scrollable Area
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(messages) { message ->
+                        ChatBubbleItem(
+                            message = message,
+                            isDark = isDark,
+                            onSpeak = { text -> viewModel.speak(text) },
+                            onNavigateAction = { route -> onNavigate(route) }
+                        )
+                    }
+
+                    if (isThinking) {
+                        item {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (isDark) Color(0x33FFFFFF) else Color(0x15000000))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color(0xFF8CE8FF)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = "Analyzing & consulting intelligence...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Input Bar with Liquid Glass Outline
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = inputText,
+                        onValueChange = { inputText = it },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("chatbot_input_field"),
+                        placeholder = {
+                            Text(
+                                "Ask anything about documents, scams, life...",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        },
+                        shape = RoundedCornerShape(24.dp),
+                        singleLine = false,
+                        maxLines = 3,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(
+                            onSend = {
+                                if (inputText.isNotBlank()) {
+                                    viewModel.sendChatMessage(inputText)
+                                    inputText = ""
+                                    focusManager.clearFocus()
+                                }
+                            }
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF8CE8FF),
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                            focusedContainerColor = if (isDark) Color(0x22FFFFFF) else Color(0x0C000000),
+                            unfocusedContainerColor = if (isDark) Color(0x18FFFFFF) else Color(0x08000000)
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    IconButton(
+                        onClick = {
+                            if (inputText.isNotBlank()) {
+                                viewModel.sendChatMessage(inputText)
+                                inputText = ""
+                                focusManager.clearFocus()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(Color(0xFF8CE8FF), Color(0xFFD69EFF))
+                                )
+                            )
+                            .testTag("chatbot_send_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Send",
+                            tint = Color.Black,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PositionChip(label: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0x228CE8FF))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 7.dp, vertical = 3.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+fun ChatBubbleItem(
+    message: ChatMessage,
+    isDark: Boolean,
+    onSpeak: (String) -> Unit,
+    onNavigateAction: (String) -> Unit
+) {
+    val isUser = message.sender == MessageSender.USER
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
+    ) {
+        Box(
+            modifier = Modifier
+                .widthIn(max = 320.dp)
+                .shadow(
+                    elevation = if (isUser) 2.dp else 4.dp,
+                    shape = RoundedCornerShape(
+                        topStart = 20.dp,
+                        topEnd = 20.dp,
+                        bottomStart = if (isUser) 20.dp else 4.dp,
+                        bottomEnd = if (isUser) 4.dp else 20.dp
+                    )
+                )
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 20.dp,
+                        topEnd = 20.dp,
+                        bottomStart = if (isUser) 20.dp else 4.dp,
+                        bottomEnd = if (isUser) 4.dp else 20.dp
+                    )
+                )
+                .background(
+                    if (isUser) {
+                        if (isDark) Brush.linearGradient(listOf(Color(0xFF383944), Color(0xFF2B2C36)))
+                        else Brush.linearGradient(listOf(Color(0xFF1E2028), Color(0xFF12141A)))
+                    } else {
+                        if (isDark) Brush.linearGradient(listOf(Color(0x40FFFFFF), Color(0x20FFFFFF)))
+                        else Brush.linearGradient(
+                            listOf(
+                                Color(0xEEFFFFFF),
+                                Color(0xFFF0F8FF)
+                            )
+                        )
+                    }
+                )
+                .border(
+                    width = 1.dp,
+                    brush = if (isUser) {
+                        Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.25f), Color.Transparent))
+                    } else {
+                        Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.85f), Color(0xFF8CE8FF).copy(alpha = 0.4f)))
+                    },
+                    shape = RoundedCornerShape(
+                        topStart = 20.dp,
+                        topEnd = 20.dp,
+                        bottomStart = if (isUser) 20.dp else 4.dp,
+                        bottomEnd = if (isUser) 4.dp else 20.dp
+                    )
+                )
+                .padding(14.dp)
+        ) {
+            Column {
+                Text(
+                    text = message.text,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        color = if (isUser) Color.White else MaterialTheme.colorScheme.onSurface
+                    )
+                )
+
+                // Optional Action Route Button
+                if (!message.actionRoute.isNullOrBlank() && !message.actionLabel.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = { onNavigateAction(message.actionRoute) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF8CE8FF),
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = message.actionLabel,
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+                }
+
+                // Audio Listen Button for assistant responses
+                if (!isUser) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { onSpeak(message.text) },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.VolumeUp,
+                                contentDescription = "Listen",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
