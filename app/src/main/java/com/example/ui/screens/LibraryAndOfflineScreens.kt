@@ -441,24 +441,58 @@ fun DocumentDetailScreen(
 
                 // Action buttons
                 item {
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Button(
-                            onClick = { onNavigate("action_cards") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan)
+                            onClick = {
+                                viewModel.generateComplianceReportForSelected {
+                                    onNavigate("compliance_report")
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF101217),
+                                contentColor = Color.White
+                            )
                         ) {
-                            Text("View Action Cards", color = Color.Black, fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.Filled.VerifiedUser,
+                                contentDescription = null,
+                                tint = Color(0xFFD4AF37),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Generate Compliance Report (Signed PDF)",
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFD4AF37)
+                            )
                         }
 
-                        OutlinedButton(
-                            onClick = { viewModel.deleteDocument(doc.id) },
-                            shape = RoundedCornerShape(12.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("Delete", color = DangerRose)
+                            Button(
+                                onClick = { onNavigate("action_cards") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan)
+                            ) {
+                                Text("View Action Cards", color = Color.Black, fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = { viewModel.deleteDocument(doc.id) },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Delete", color = DangerRose)
+                            }
                         }
                     }
                 }

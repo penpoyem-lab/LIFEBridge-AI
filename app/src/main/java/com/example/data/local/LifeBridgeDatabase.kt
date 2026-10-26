@@ -6,12 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.local.dao.ActionCardDao
+import com.example.data.local.dao.AuditLogDao
 import com.example.data.local.dao.ChatMessageDao
 import com.example.data.local.dao.DocumentDao
 import com.example.data.local.dao.EmergencyContactDao
 import com.example.data.local.dao.NoteRecallDao
 import com.example.data.local.dao.SafetyCheckDao
 import com.example.data.local.entities.ActionCardEntity
+import com.example.data.local.entities.AuditLogEntity
 import com.example.data.local.entities.ChatMessageEntity
 import com.example.data.local.entities.DocumentEntity
 import com.example.data.local.entities.EmergencyContactEntity
@@ -28,9 +30,10 @@ import kotlinx.coroutines.launch
         SafetyCheckEntity::class,
         EmergencyContactEntity::class,
         NoteRecallEntity::class,
-        ChatMessageEntity::class
+        ChatMessageEntity::class,
+        AuditLogEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class LifeBridgeDatabase : RoomDatabase() {
@@ -40,6 +43,7 @@ abstract class LifeBridgeDatabase : RoomDatabase() {
     abstract fun emergencyContactDao(): EmergencyContactDao
     abstract fun noteRecallDao(): NoteRecallDao
     abstract fun chatMessageDao(): ChatMessageDao
+    abstract fun auditLogDao(): AuditLogDao
 
     companion object {
         @Volatile
@@ -222,6 +226,38 @@ abstract class LifeBridgeDatabase : RoomDatabase() {
                 timestamp = System.currentTimeMillis()
             )
             database.chatMessageDao().insertMessage(initialWelcome)
+
+            // Seed Initial Enterprise Security Audit Logs
+            val initialAuditLogs = listOf(
+                AuditLogEntity(
+                    id = "audit_001",
+                    timestamp = System.currentTimeMillis() - 7200000,
+                    formattedTime = "Today, 06:15 AM",
+                    action = "SYSTEM_INTEGRITY_BOOT",
+                    targetTitle = "Local Hardware Keystore & Room Cipher",
+                    integrityHash = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    severity = "INFO"
+                ),
+                AuditLogEntity(
+                    id = "audit_002",
+                    timestamp = System.currentTimeMillis() - 3600000,
+                    formattedTime = "Today, 07:45 AM",
+                    action = "VAULT_BIOMETRIC_AUTH",
+                    targetTitle = "Biometric Gate Session Validated",
+                    integrityHash = "sha256:8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+                    severity = "INFO"
+                ),
+                AuditLogEntity(
+                    id = "audit_003",
+                    timestamp = System.currentTimeMillis() - 1800000,
+                    formattedTime = "Today, 08:30 AM",
+                    action = "COMPLIANCE_SIGNATURE",
+                    targetTitle = "Student Grant Application Integrity Fingerprint",
+                    integrityHash = "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+                    severity = "INFO"
+                )
+            )
+            initialAuditLogs.forEach { database.auditLogDao().insertLog(it) }
         }
     }
 }

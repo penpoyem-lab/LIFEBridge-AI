@@ -129,6 +129,8 @@ fun AccountProfileScreen(
             )
 
             GlassCard(modifier = Modifier.fillMaxWidth()) {
+                ProfileOptionRow(icon = Icons.Filled.Security, title = "Security Audit Center & Biometric Gate", tint = ElectricCyan, onClick = { onNavigate("security_audit") })
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 ProfileOptionRow(icon = Icons.Filled.Settings, title = "App Settings", onClick = { onNavigate("settings") })
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 ProfileOptionRow(icon = Icons.Filled.Lock, title = "Privacy & Permissions", onClick = { onNavigate("privacy_security") })

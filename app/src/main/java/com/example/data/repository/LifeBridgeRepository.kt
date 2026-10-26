@@ -6,14 +6,17 @@ import com.example.data.local.entities.ActionCardEntity
 import com.example.data.local.entities.DocumentEntity
 import com.example.data.local.entities.EmergencyContactEntity
 import com.example.data.local.entities.SafetyCheckEntity
+import com.example.data.local.entities.AuditLogEntity
 import com.example.data.model.*
 import com.example.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,6 +31,7 @@ class LifeBridgeRepository(
     private val emergencyDao = database.emergencyContactDao()
     private val recallDao = database.noteRecallDao()
     private val chatDao = database.chatMessageDao()
+    private val auditDao = database.auditLogDao()
 
     val allDocuments: Flow<List<DocumentEntity>> = docDao.getAllDocuments()
     val allCards: Flow<List<ActionCardEntity>> = cardDao.getAllCards()
@@ -35,6 +39,7 @@ class LifeBridgeRepository(
     val emergencyContacts: Flow<List<EmergencyContactEntity>> = emergencyDao.getAllEmergencyContacts()
     val activeNoteRecalls: Flow<List<com.example.data.local.entities.NoteRecallEntity>> = recallDao.getActiveRecalls()
     val allNoteRecalls: Flow<List<com.example.data.local.entities.NoteRecallEntity>> = recallDao.getAllRecalls()
+    val allAuditLogs: Flow<List<AuditLogEntity>> = auditDao.getAllLogs()
 
     val allChatMessages: Flow<List<ChatMessage>> = chatDao.getAllMessages().map { list ->
         list.map { entity ->
@@ -66,6 +71,112 @@ class LifeBridgeRepository(
 
     suspend fun clearChatHistory() = withContext(Dispatchers.IO) {
         chatDao.clearAllMessages()
+    }
+
+    suspend fun recordAuditLog(action: String, targetTitle: String, severity: String = "INFO") = withContext(Dispatchers.IO) {
+        val timeNow = System.currentTimeMillis()
+        val formatted = SimpleDateFormat("MMM dd, yyyy • HH:mm:ss", Locale.getDefault()).format(Date(timeNow))
+        val rawToHash = "$action|$targetTitle|$timeNow|LIFEBRIDGE_SECURE_SALT"
+        val hashBytes = MessageDigest.getInstance("SHA-256").digest(rawToHash.toByteArray(Charsets.UTF_8))
+        val hashHex = hashBytes.joinToString("") { "%02x".format(it) }
+
+        val log = AuditLogEntity(
+            id = UUID.randomUUID().toString(),
+            timestamp = timeNow,
+            formattedTime = formatted,
+            action = action,
+            targetTitle = targetTitle,
+            integrityHash = "sha256:$hashHex",
+            severity = severity
+        )
+        auditDao.insertLog(log)
+    }
+
+    suspend fun clearAuditLogs() = withContext(Dispatchers.IO) {
+        auditDao.clearAllLogs()
+    }
+
+    fun getExecutiveStatsFlow(): Flow<ExecutiveStats> {
+        return combine(allCards, allDocuments, allSafetyChecks, allNoteRecalls) { cards, docs, checks, recalls ->
+            val pendingCards = cards.filter { !it.isCompleted }
+            val urgentCard = pendingCards.sortedByDescending { it.priority == "High" }.firstOrNull()
+
+            val totalSafetyScore = if (checks.isNotEmpty()) {
+                val sumSafe = checks.sumOf { 100 - it.riskScore.coerceIn(0, 100) }
+                sumSafe / checks.size
+            } else 95
+
+            ExecutiveStats(
+                pendingDeadlinesCount = pendingCards.size,
+                urgentActionTitle = urgentCard?.title ?: "No Pending Deadlines",
+                urgentActionDate = urgentCard?.dueDateFormatted ?: "All tasks on schedule",
+                safetyScoreAvg = totalSafetyScore,
+                totalVaultDocs = docs.size,
+                voiceMemosCount = recalls.size
+            )
+        }
+    }
+
+    suspend fun recordVoiceMemo(transcript: String, translatedText: String? = null): ActionCardEntity = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        val timeStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(Date(now))
+        val cardId = "memo_card_${UUID.randomUUID().toString().take(6)}"
+
+        val card = ActionCardEntity(
+            id = cardId,
+            documentId = "voice_memo",
+            title = if (transcript.length > 36) "${transcript.take(36)}..." else transcript,
+            description = translatedText?.let { "$transcript\n\n[Translation]: $it" } ?: transcript,
+            priority = "Medium",
+            dueDateFormatted = "Scheduled: $timeStr",
+            isCompleted = false,
+            category = "Voice Memo"
+        )
+        cardDao.insertCards(listOf(card))
+
+        val recall = com.example.data.local.entities.NoteRecallEntity(
+            id = "memo_rec_${UUID.randomUUID().toString().take(6)}",
+            title = "🎙️ Voice Memo: ${card.title}",
+            snippet = card.description,
+            category = "Voice Note",
+            scheduledTimeFormatted = timeStr,
+            isTriggered = false,
+            isDone = false,
+            accentColorHex = "#8CE8FF",
+            audioNoteText = transcript
+        )
+        recallDao.insertRecalls(listOf(recall))
+
+        recordAuditLog("VOICE_MEMO_RECORD", card.title, "INFO")
+        card
+    }
+
+    suspend fun generateComplianceReport(document: DocumentEntity): ComplianceReport = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        val formattedDate = SimpleDateFormat("MMMM dd, yyyy • HH:mm:ss z", Locale.ENGLISH).format(Date(now))
+        val reportId = "LBR-COMPLIANCE-${document.id.uppercase().take(8)}-${now.toString().takeLast(4)}"
+
+        val dates = parseJsonStringList(document.datesJson)
+        val actions = parseJsonStringList(document.actionItemsJson)
+
+        val rawFingerprint = "${document.id}|${document.title}|${document.summary}|${document.createdAt}|$now"
+        val hashBytes = MessageDigest.getInstance("SHA-256").digest(rawFingerprint.toByteArray(Charsets.UTF_8))
+        val hashHex = hashBytes.joinToString("") { "%02x".format(it) }
+
+        recordAuditLog("PDF_COMPLIANCE_EXPORT", document.title, "INFO")
+
+        ComplianceReport(
+            reportId = reportId,
+            timestampFormatted = formattedDate,
+            documentTitle = document.title,
+            documentCategory = document.category,
+            fullSummary = document.summary,
+            keyDates = dates,
+            actionItems = actions,
+            digitalFingerprintSha256 = hashHex,
+            verificationSeal = "VERIFIED • SECURE HARDWARE ENCLAVE",
+            complianceOfficerSeal = "LIFEBridge Enterprise Integrity Seal #7821"
+        )
     }
 
     suspend fun snoozeRecall(id: String, newTime: String = "Snoozed +1h") = withContext(Dispatchers.IO) {

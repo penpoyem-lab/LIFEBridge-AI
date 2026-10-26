@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -43,6 +45,8 @@ fun HomeScreen(
     val userName by viewModel.userDisplayName.collectAsState()
     val activeRecalls by viewModel.activeNoteRecalls.collectAsState()
     val dismissedRecallIds by viewModel.dismissedRecallIds.collectAsState()
+    val executiveStats by viewModel.executiveStats.collectAsState()
+    val contextSuggestion by viewModel.currentScreenContextSuggestion.collectAsState()
 
     val visibleRecall = activeRecalls.firstOrNull { it.id !in dismissedRecallIds }
 
@@ -176,6 +180,325 @@ fun HomeScreen(
                                     modifier = Modifier
                                         .size(15.dp)
                                         .rotate(-45f)
+                                        .rotate(-45f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // =======================================================
+            // Executive Proactive Intelligence Banner
+            // =======================================================
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            Brush.linearGradient(
+                                listOf(
+                                    Color(0xFF14161F),
+                                    Color(0xFF1C2230)
+                                )
+                            )
+                        )
+                        .border(
+                            1.dp,
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFFD4AF37).copy(alpha = 0.5f),
+                                    Color(0xFF8CE8FF).copy(alpha = 0.3f)
+                                )
+                            ),
+                            RoundedCornerShape(18.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFD4AF37))
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "EXECUTIVE INTELLIGENCE",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        letterSpacing = 1.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = Color(0xFFD4AF37)
+                                )
+                                Text(
+                                    text = contextSuggestion.prompt,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    maxLines = 2
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(
+                            onClick = { onNavigate(contextSuggestion.targetRoute) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFD4AF37),
+                                contentColor = Color(0xFF101217)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = contextSuggestion.actionLabel,
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // =======================================================
+            // Executive KPI Interactive Stat Widgets (2x2 Grid)
+            // =======================================================
+            item {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Executive Overview",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontStyle = FontStyle.Italic,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Umbra
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Stat 1: Action Items Due
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(PastelCream)
+                                .border(1.dp, Umbra.copy(alpha = 0.1f), RoundedCornerShape(18.dp))
+                                .clickable { onNavigate("action_cards") }
+                                .padding(14.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${executiveStats.pendingDeadlinesCount}",
+                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = Umbra
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(DangerRose.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.AccessTime,
+                                            contentDescription = null,
+                                            tint = DangerRose,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Pending Deadlines",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = Umbra
+                                )
+                                Text(
+                                    text = executiveStats.urgentActionDate,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = CharcoalMuted,
+                                    fontSize = 11.sp,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+
+                        // Stat 2: Security & Zero-Trust Score
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(PastelLavender)
+                                .border(1.dp, Umbra.copy(alpha = 0.1f), RoundedCornerShape(18.dp))
+                                .clickable { onNavigate("security_audit") }
+                                .padding(14.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${executiveStats.safetyScoreAvg}%",
+                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = Umbra
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF10B981).copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Shield,
+                                            contentDescription = null,
+                                            tint = Color(0xFF10B981),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Security Index",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = Umbra
+                                )
+                                Text(
+                                    text = "Biometric Enclave OK",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = CharcoalMuted,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Stat 3: Vault Documents
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(PastelMint)
+                                .border(1.dp, Umbra.copy(alpha = 0.1f), RoundedCornerShape(18.dp))
+                                .clickable { onNavigate("library") }
+                                .padding(14.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${executiveStats.totalVaultDocs}",
+                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = Umbra
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(Umbra.copy(alpha = 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Folder,
+                                            contentDescription = null,
+                                            tint = Umbra,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Indexed Records",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = Umbra
+                                )
+                                Text(
+                                    text = "SHA-256 Signatures",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = CharcoalMuted,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        // Stat 4: Voice Memos & Transcripts
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(PastelPeach)
+                                .border(1.dp, Umbra.copy(alpha = 0.1f), RoundedCornerShape(18.dp))
+                                .clickable { onNavigate("voice_translate") }
+                                .padding(14.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${executiveStats.voiceMemosCount}",
+                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = Umbra
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(Umbra.copy(alpha = 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Mic,
+                                            contentDescription = null,
+                                            tint = Umbra,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Audio Intelligence",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = Umbra
+                                )
+                                Text(
+                                    text = "Dual-Speaker Ready",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = CharcoalMuted,
+                                    fontSize = 11.sp
                                 )
                             }
                         }

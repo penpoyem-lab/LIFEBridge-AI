@@ -1,11 +1,8 @@
 package com.example.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,9 +29,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.IntOffset
@@ -47,7 +48,10 @@ import com.example.data.model.MessageSender
 import com.example.ui.theme.*
 import com.example.viewmodel.LifeBridgeViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 @Composable
 fun FloatingChatbotOverlay(
@@ -55,8 +59,10 @@ fun FloatingChatbotOverlay(
     onNavigate: (String) -> Unit
 ) {
     val isOpen by viewModel.isChatbotOpen.collectAsState()
+    val isStudioVoiceHudActive by viewModel.isStudioVoiceHudActive.collectAsState()
     val offsetX by viewModel.chatbotOffsetX.collectAsState()
     val offsetY by viewModel.chatbotOffsetY.collectAsState()
+    var isRadialExpanded by remember { mutableStateOf(false) }
 
     // Breathing pulse animation for cool AI icon halo
     val infiniteTransition = rememberInfiniteTransition(label = "chatbot_pulse")
@@ -81,7 +87,7 @@ fun FloatingChatbotOverlay(
 
     val isDark = MaterialTheme.colorScheme.background == UmbraDarkBg
 
-    // Floating Draggable Chatbot Orb
+    // Floating Draggable Chatbot Orb with Radial Action Wheel
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -100,6 +106,70 @@ fun FloatingChatbotOverlay(
                 .testTag("chatbot_floating_button"),
             contentAlignment = Alignment.Center
         ) {
+            // Expandable Radial Action Buttons
+            AnimatedVisibility(
+                visible = isRadialExpanded,
+                enter = fadeIn(tween(250)) + scaleIn(tween(250)),
+                exit = fadeOut(tween(200)) + scaleOut(tween(200))
+            ) {
+                Box(
+                    modifier = Modifier.size(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Radial 1: Voice Memo Recording (-135 degrees / Top-Left)
+                    RadialActionWheelItem(
+                        icon = Icons.Filled.Mic,
+                        label = "Memo",
+                        color = Color(0xFF8CE8FF),
+                        offsetX = -65.dp,
+                        offsetY = -65.dp,
+                        onClick = {
+                            viewModel.saveVoiceMemo("Executive Voice Note: Urgent administrative action item recorded at ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(java.util.Date())}")
+                            isRadialExpanded = false
+                        }
+                    )
+
+                    // Radial 2: Studio Voice Waveform HUD (-90 degrees / Top)
+                    RadialActionWheelItem(
+                        icon = Icons.Filled.GraphicEq,
+                        label = "Voice HUD",
+                        color = Color(0xFFE8D5B5),
+                        offsetX = 0.dp,
+                        offsetY = -85.dp,
+                        onClick = {
+                            viewModel.setStudioVoiceHudActive(true)
+                            isRadialExpanded = false
+                        }
+                    )
+
+                    // Radial 3: Document Camera Scan (-180 degrees / Left)
+                    RadialActionWheelItem(
+                        icon = Icons.Filled.CameraAlt,
+                        label = "Fast Scan",
+                        color = Color(0xFFFFB28E),
+                        offsetX = -85.dp,
+                        offsetY = 0.dp,
+                        onClick = {
+                            onNavigate("scanner")
+                            isRadialExpanded = false
+                        }
+                    )
+
+                    // Radial 4: Security Audit Center (-45 degrees / Top-Right)
+                    RadialActionWheelItem(
+                        icon = Icons.Filled.Shield,
+                        label = "Audit Vault",
+                        color = Color(0xFF00E676),
+                        offsetX = 65.dp,
+                        offsetY = -65.dp,
+                        onClick = {
+                            onNavigate("security_audit")
+                            isRadialExpanded = false
+                        }
+                    )
+                }
+            }
+
             // Pulsing Glacier Ambient Glow Halo
             Box(
                 modifier = Modifier
@@ -192,16 +262,27 @@ fun FloatingChatbotOverlay(
                         .scale(pulseScale)
                 )
 
-                // Small active sparkle indicator
+                // Radial Wheel Quick-Action Toggle Badge
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
+                        .size(20.dp)
                         .align(Alignment.TopEnd)
-                        .offset(x = (-4).dp, y = 4.dp)
+                        .offset(x = 2.dp, y = (-2).dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF00E676))
+                        .background(
+                            if (isRadialExpanded) Color(0xFFE8D5B5) else Color(0xFF00E676)
+                        )
                         .border(1.5.dp, Color.White, CircleShape)
-                )
+                        .clickable { isRadialExpanded = !isRadialExpanded },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (isRadialExpanded) Icons.Filled.Close else Icons.Filled.Bolt,
+                        contentDescription = "Quick Wheel",
+                        tint = Color.Black,
+                        modifier = Modifier.size(11.dp)
+                    )
+                }
             }
         }
     }
@@ -215,6 +296,57 @@ fun FloatingChatbotOverlay(
                 viewModel.toggleChatbot(false)
                 onNavigate(route)
             }
+        )
+    }
+
+    // Fullscreen Studio Voice Waveform HUD Dialog
+    if (isStudioVoiceHudActive) {
+        StudioVoiceWaveformHudDialog(
+            viewModel = viewModel,
+            onDismiss = { viewModel.setStudioVoiceHudActive(false) }
+        )
+    }
+}
+
+@Composable
+fun RadialActionWheelItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    color: Color,
+    offsetX: androidx.compose.ui.unit.Dp,
+    offsetY: androidx.compose.ui.unit.Dp,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .offset(x = offsetX, y = offsetY)
+            .clickable { onClick() }
+    ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .shadow(8.dp, CircleShape, spotColor = color)
+                .clip(CircleShape)
+                .background(Color(0xE61A1C24))
+                .border(1.2.dp, color.copy(alpha = 0.8f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = Color.White
         )
     }
 }

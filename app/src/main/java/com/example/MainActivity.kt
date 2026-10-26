@@ -56,6 +56,8 @@ fun LifeBridgeApp(viewModel: LifeBridgeViewModel) {
                 "explanation_results" -> viewModel.navigateTo("home")
                 "action_cards" -> viewModel.navigateTo("home")
                 "document_detail" -> viewModel.navigateTo("library")
+                "compliance_report" -> viewModel.navigateTo("library")
+                "security_audit" -> viewModel.navigateTo("profile")
                 "safety_results" -> viewModel.navigateTo("safety_checker")
                 "signup", "forgot_password" -> viewModel.navigateTo("login")
                 else -> viewModel.navigateTo("home")
@@ -173,6 +175,14 @@ fun LifeBridgeApp(viewModel: LifeBridgeViewModel) {
                     onNavigate = { viewModel.navigateTo(it) }
                 )
                 "privacy_security" -> PrivacySecurityScreen(
+                    onNavigate = { viewModel.navigateTo(it) }
+                )
+                "security_audit" -> SecurityAuditScreen(
+                    viewModel = viewModel,
+                    onNavigate = { viewModel.navigateTo(it) }
+                )
+                "compliance_report" -> ComplianceReportScreen(
+                    viewModel = viewModel,
                     onNavigate = { viewModel.navigateTo(it) }
                 )
                 "help_support" -> HelpSupportScreen(

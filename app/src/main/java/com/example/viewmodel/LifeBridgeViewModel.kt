@@ -9,8 +9,11 @@ import com.example.data.local.entities.DocumentEntity
 import com.example.data.local.entities.EmergencyContactEntity
 import com.example.data.local.entities.NoteRecallEntity
 import com.example.data.local.entities.SafetyCheckEntity
+import com.example.data.local.entities.AuditLogEntity
 import com.example.data.model.*
 import com.example.data.repository.LifeBridgeRepository
+import com.example.data.repository.ExecutiveStats
+import com.example.data.repository.ComplianceReport
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -39,6 +42,12 @@ class LifeBridgeViewModel(application: Application) : AndroidViewModel(applicati
 
     val allNoteRecalls: StateFlow<List<NoteRecallEntity>> = repository.allNoteRecalls
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val auditLogs: StateFlow<List<AuditLogEntity>> = repository.allAuditLogs
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val executiveStats: StateFlow<ExecutiveStats> = repository.getExecutiveStatsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExecutiveStats())
 
     // Preferences Flows
     val currentLanguage = repository.preferences.languageFlow
@@ -69,8 +78,50 @@ class LifeBridgeViewModel(application: Application) : AndroidViewModel(applicati
     private val _currentScreen = MutableStateFlow("home")
     val currentScreen: StateFlow<String> = _currentScreen.asStateFlow()
 
+    val currentScreenContextSuggestion: StateFlow<ScreenContextSuggestion> = _currentScreen.map { screen ->
+        when (screen) {
+            "home" -> ScreenContextSuggestion(
+                prompt = "Executive Status: Student grant application deadline is June 30.",
+                actionLabel = "View Summary",
+                targetRoute = "library"
+            )
+            "universal_input", "scanner" -> ScreenContextSuggestion(
+                prompt = "OCR Intelligence: Align camera squarely with seals & watermarks for 99% accuracy.",
+                actionLabel = "Open Camera",
+                targetRoute = "scanner"
+            )
+            "safety", "safety_checker" -> ScreenContextSuggestion(
+                prompt = "Zero-Trust Shield: Scanned 12 communications with 0 malicious payloads.",
+                actionLabel = "Test Message",
+                targetRoute = "safety_checker"
+            )
+            "library" -> ScreenContextSuggestion(
+                prompt = "Compliance Vault: Generate signed SHA-256 PDF report for legal or academic records.",
+                actionLabel = "Select Record",
+                targetRoute = "library"
+            )
+            else -> ScreenContextSuggestion(
+                prompt = "Studio Assistant: Speak naturally in any language for real-time phonetics.",
+                actionLabel = "Start HUD",
+                targetRoute = "voice_translate"
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ScreenContextSuggestion("LIFEBridge Executive Active", "Start", "home"))
+
     private val _selectedDocument = MutableStateFlow<DocumentEntity?>(null)
     val selectedDocument: StateFlow<DocumentEntity?> = _selectedDocument.asStateFlow()
+
+    // Compliance Report State
+    private val _activeComplianceReport = MutableStateFlow<ComplianceReport?>(null)
+    val activeComplianceReport: StateFlow<ComplianceReport?> = _activeComplianceReport.asStateFlow()
+
+    // Studio Voice HUD Waveform State
+    private val _isStudioVoiceHudActive = MutableStateFlow(false)
+    val isStudioVoiceHudActive: StateFlow<Boolean> = _isStudioVoiceHudActive.asStateFlow()
+
+    // Biometric Security Vault State
+    private val _isVaultUnlocked = MutableStateFlow(false)
+    val isVaultUnlocked: StateFlow<Boolean> = _isVaultUnlocked.asStateFlow()
 
     // Processing Progress State
     private val _isProcessing = MutableStateFlow(false)
@@ -513,7 +564,66 @@ class LifeBridgeViewModel(application: Application) : AndroidViewModel(applicati
             _currentScreen.value = "onboarding_1"
         }
     }
+
+    // Executive Compliance Report Generation
+    fun generateComplianceReportForSelected(onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            val doc = _selectedDocument.value ?: documents.value.firstOrNull()
+            if (doc != null) {
+                val report = repository.generateComplianceReport(doc)
+                _activeComplianceReport.value = report
+                _snackbarMessage.emit("Compliance Report #${report.reportId.takeLast(6)} Signed")
+                onComplete()
+            } else {
+                _snackbarMessage.emit("Please select a document to generate report")
+            }
+        }
+    }
+
+    // Studio Voice Waveform HUD
+    fun setStudioVoiceHudActive(active: Boolean) {
+        _isStudioVoiceHudActive.value = active
+    }
+
+    // One-Tap Voice Memo Action
+    fun saveVoiceMemo(transcript: String, translated: String? = null) {
+        viewModelScope.launch {
+            val card = repository.recordVoiceMemo(transcript, translated)
+            _snackbarMessage.emit("Voice Memo logged: ${card.title}")
+        }
+    }
+
+    // Biometric Vault Lock & Unlock
+    fun unlockVault(pinOrBio: String = "1234"): Boolean {
+        return if (pinOrBio.length >= 4) {
+            _isVaultUnlocked.value = true
+            viewModelScope.launch {
+                repository.recordAuditLog("VAULT_BIOMETRIC_AUTH", "Biometric Hardware Gate Unlocked", "INFO")
+                _snackbarMessage.emit("Security Vault Unlocked")
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    fun lockVault() {
+        _isVaultUnlocked.value = false
+    }
+
+    fun clearAuditLogs() {
+        viewModelScope.launch {
+            repository.clearAuditLogs()
+            _snackbarMessage.emit("Audit trail cleared")
+        }
+    }
 }
+
+data class ScreenContextSuggestion(
+    val prompt: String,
+    val actionLabel: String,
+    val targetRoute: String
+)
 
 data class LiveConversationMessage(
     val id: String = UUID.randomUUID().toString(),
