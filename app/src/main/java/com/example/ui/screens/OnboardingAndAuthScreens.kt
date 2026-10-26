@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,10 +15,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.animation.core.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -37,16 +41,31 @@ fun SplashScreen(
     onTimeout: () -> Unit
 ) {
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(1800)
+        kotlinx.coroutines.delay(2000)
         onTimeout()
     }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "splash_pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse_scale"
+    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(BackgroundDark, Color(0xFF0F172A), Color(0xFF081226))
+                    listOf(
+                        Color(0xFF161720),
+                        Color(0xFF0F1017),
+                        Color(0xFF08090E)
+                    )
                 )
             ),
         contentAlignment = Alignment.Center
@@ -56,51 +75,126 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(32.dp)
         ) {
+            // Floating 3D Glacier Aurora Sphere
             Box(
                 modifier = Modifier
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(ElectricCyan.copy(alpha = 0.25f), Color.Transparent)
-                        )
-                    )
-                    .border(1.5.dp, ElectricCyan.copy(alpha = 0.6f), CircleShape),
+                    .size(120.dp)
+                    .scale(pulseScale),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Spa,
-                    contentDescription = null,
-                    tint = ElectricCyan,
-                    modifier = Modifier.size(54.dp)
+                // Pulsing ambient halo
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(
+                                    Color(0xFF8CE8FF).copy(alpha = 0.45f),
+                                    Color(0xFFD69EFF).copy(alpha = 0.25f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
                 )
+
+                // 3D Glass Crystal Orb
+                Box(
+                    modifier = Modifier
+                        .size(88.dp)
+                        .shadow(elevation = 16.dp, shape = CircleShape, spotColor = Color(0xFF8CE8FF))
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(Color(0xFF8CE8FF), Color(0xFFFFB28E), Color(0xFFD69EFF))
+                            )
+                        )
+                        .border(
+                            width = 2.dp,
+                            brush = Brush.verticalGradient(
+                                listOf(Color.White, Color.White.copy(alpha = 0.3f))
+                            ),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Top-lit reflection
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.48f)
+                            .align(Alignment.TopCenter)
+                            .clip(RoundedCornerShape(topStart = 44.dp, topEnd = 44.dp))
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.White.copy(alpha = 0.55f), Color.Transparent)
+                                )
+                            )
+                    )
+
+                    Icon(
+                        imageVector = Icons.Filled.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFF12131A),
+                        modifier = Modifier.size(44.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Text(
                 text = "LIFEBridge AI",
-                style = MaterialTheme.typography.headlineLarge,
-                color = TextPrimaryDark,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
+                ),
+                color = Color.White
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Understand More. Worry Less. Take the Next Step.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondaryDark,
+                text = "Understand More • Worry Less • Take the Next Step",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                ),
+                color = Color(0xFFA0A5B8),
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(44.dp))
 
-            CircularProgressIndicator(
-                modifier = Modifier.size(28.dp),
-                color = ElectricCyan,
-                strokeWidth = 2.5.dp
-            )
+            // Glacier Liquid Progress Capsule
+            Box(
+                modifier = Modifier
+                    .width(140.dp)
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0x22FFFFFF))
+            ) {
+                val progressAnimation by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1500, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "splash_loading_bar"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progressAnimation)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF8CE8FF), Color(0xFFFFB28E), Color(0xFFD69EFF))
+                            )
+                        )
+                )
+            }
         }
     }
 }
@@ -112,25 +206,47 @@ fun OnboardingScreen(
 ) {
     var step by remember { mutableStateOf(1) }
 
+    data class SlideInfo(
+        val title: String,
+        val subtitle: String,
+        val icon: androidx.compose.ui.graphics.vector.ImageVector,
+        val badgeText: String,
+        val tagList: List<String>
+    )
+
     val slides = listOf(
-        Triple(
-            "Turn Complex Information Into Clear Steps",
-            "Upload, scan or paste any document. We'll extract deadlines, facts, and create actionable checklists for you.",
-            Icons.Filled.Description
+        SlideInfo(
+            title = "Universal Document Intelligence",
+            subtitle = "Upload, scan or paste complex paperwork. We extract payment deadlines, eligibility rules, and create actionable task cards automatically.",
+            icon = Icons.Filled.Description,
+            badgeText = "Auto-Extract Deadlines & Requirements",
+            tagList = listOf("Scholarships", "Hospital Bills", "Contracts", "Notices")
         ),
-        Triple(
-            "Your Language. Your Voice.",
-            "Get explanations in English, Bengali (বাংলা), Hindi (हिन्दी) and more. Listen to summaries or speak naturally.",
-            Icons.Filled.RecordVoiceOver
+        SlideInfo(
+            title = "Scam & Phishing Defense Shield",
+            subtitle = "Verify suspicious SMS, lottery claims, urgent money requests, and unknown links before clicking or sending funds.",
+            icon = Icons.Filled.Shield,
+            badgeText = "Real-Time Social Engineering Radar",
+            tagList = listOf("Fraud Detector", "Link Analysis", "Safety Advice")
         ),
-        Triple(
-            "Stay Safe & Be Prepared",
-            "Check suspicious messages for scam indicators, verify links, and access offline emergency guides anytime.",
-            Icons.Filled.Shield
+        SlideInfo(
+            title = "Live Split-Screen Voice Studio",
+            subtitle = "Speak naturally with dual-mic real-time translation. Includes dynamic audio waveform visualizer and natural voice playback in any language.",
+            icon = Icons.Filled.RecordVoiceOver,
+            badgeText = "Face-to-Face Dual Conversation",
+            tagList = listOf("English", "Bengali (বাংলা)", "Hindi (हिन्दी)", "Spanish")
+        ),
+        SlideInfo(
+            title = "Draggable Floating AI Chatbot",
+            subtitle = "Tap or drag the floating liquid assistant anywhere on screen. Ask questions, receive deep answers, and trigger actions with zero friction.",
+            icon = Icons.Filled.AutoAwesome,
+            badgeText = "24/7 Context-Aware Intelligence",
+            tagList = listOf("Movable Bubble", "Room Storage", "Real AI Engine")
         )
     )
 
     val currentSlide = slides[step - 1]
+    val isDark = MaterialTheme.colorScheme.background == UmbraDarkBg
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -138,46 +254,111 @@ fun OnboardingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(horizontal = 24.dp, vertical = 18.dp)
                     .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
-                // Indicator dots
+                // Liquid Spring Indicator Dots
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 20.dp),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    repeat(3) { index ->
+                    repeat(slides.size) { index ->
+                        val isCurrent = step == index + 1
+                        val dotWidth by androidx.compose.animation.core.animateDpAsState(
+                            targetValue = if (isCurrent) 28.dp else 8.dp,
+                            animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.65f),
+                            label = "indicator_dot_width"
+                        )
+
                         Box(
                             modifier = Modifier
                                 .padding(horizontal = 4.dp)
-                                .height(6.dp)
-                                .width(if (step == index + 1) 24.dp else 6.dp)
-                                .clip(CircleShape)
+                                .height(8.dp)
+                                .width(dotWidth)
+                                .clip(RoundedCornerShape(4.dp))
                                 .background(
-                                    if (step == index + 1) ElectricCyan else TextTertiaryDark
+                                    if (isCurrent) {
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFF8CE8FF), Color(0xFFD69EFF))
+                                        )
+                                    } else {
+                                        if (isDark) Brush.linearGradient(listOf(Color(0x33FFFFFF), Color(0x22FFFFFF)))
+                                        else Brush.linearGradient(listOf(Color(0x25000000), Color(0x18000000)))
+                                    }
                                 )
                         )
                     }
                 }
 
-                GradientButton(
-                    text = if (step < 3) "Next" else "Get Started",
+                // Glacier Liquid Action Button
+                Button(
                     onClick = {
-                        if (step < 3) step++ else onComplete()
+                        if (step < slides.size) step++ else onComplete()
                     },
-                    modifier = Modifier.testTag("onboarding_next_button")
-                )
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                        .testTag("onboarding_next_button"),
+                    shape = RoundedCornerShape(27.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    ),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFF8CE8FF),
+                                        Color(0xFFFFB28E),
+                                        Color(0xFFD69EFF)
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.8f),
+                                shape = RoundedCornerShape(27.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (step < slides.size) "Continue" else "Launch LIFEBridge",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF12131A)
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = Color(0xFF12131A),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
 
-                if (step < 3) {
+                if (step < slides.size) {
                     TextButton(
                         onClick = onComplete,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(top = 8.dp)
+                            .testTag("onboarding_skip_button")
                     ) {
-                        Text("Skip", color = TextSecondaryDark)
+                        Text(
+                            text = "Skip Tour",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
@@ -187,41 +368,143 @@ fun OnboardingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Unique Liquid Glass Hero Card
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .border(1.dp, ElectricCyan.copy(alpha = 0.4f), CircleShape),
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = RoundedCornerShape(32.dp),
+                        spotColor = Color(0x388CE8FF),
+                        ambientColor = Color(0x22D69EFF)
+                    )
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(
+                        if (isDark) Color(0xD01F202A) else Color(0xF2FFFFFF)
+                    )
+                    .border(
+                        width = 1.5.dp,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color.White.copy(alpha = if (isDark) 0.65f else 0.98f),
+                                Color(0xFF8CE8FF).copy(alpha = 0.35f),
+                                Color.White.copy(alpha = 0.15f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(32.dp)
+                    )
+                    .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = currentSlide.third,
-                    contentDescription = null,
-                    tint = ElectricCyan,
-                    modifier = Modifier.size(56.dp)
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Floating 3D Crystal Icon Orb
+                    Box(
+                        modifier = Modifier
+                            .size(92.dp)
+                            .shadow(elevation = 10.dp, shape = CircleShape, spotColor = Color(0xFF8CE8FF))
+                            .clip(CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(
+                                        Color(0xFF8CE8FF),
+                                        Color(0xFFFFB28E),
+                                        Color(0xFFD69EFF)
+                                    )
+                                )
+                            )
+                            .border(1.5.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Top specular shine
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.48f)
+                                .align(Alignment.TopCenter)
+                                .clip(RoundedCornerShape(topStart = 46.dp, topEnd = 46.dp))
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.White.copy(alpha = 0.60f), Color.Transparent)
+                                )
+                            )
+                        )
+
+                        Icon(
+                            imageVector = currentSlide.icon,
+                            contentDescription = null,
+                            tint = Color(0xFF14151D),
+                            modifier = Modifier.size(46.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Pill Badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0x208CE8FF))
+                            .border(1.dp, Color(0xFF8CE8FF).copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = currentSlide.badgeText,
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = if (isDark) Color(0xFF8CE8FF) else Color(0xFF00789E)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Feature Tag Chips
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    ) {
+                        currentSlide.tagList.take(3).forEach { tag ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isDark) Color(0x33FFFFFF) else Color(0x12000000))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = tag,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             Text(
-                text = currentSlide.first,
-                style = MaterialTheme.typography.headlineMedium,
+                text = currentSlide.title,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.5).sp
+                ),
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
+                textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = currentSlide.second,
-                style = MaterialTheme.typography.bodyLarge,
+                text = currentSlide.subtitle,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    lineHeight = 22.sp,
+                    fontSize = 14.sp
+                ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
@@ -669,7 +952,8 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = ButtonDefaults.outlinedButtonBorder.copy(
+                border = BorderStroke(
+                    width = 1.dp,
                     brush = Brush.horizontalGradient(listOf(ElectricCyan, RoyalViolet))
                 )
             ) {

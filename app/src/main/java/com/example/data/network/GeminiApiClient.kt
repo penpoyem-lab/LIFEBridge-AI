@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 // Gemini API Request Models
 data class GeminiRequest(
     val contents: List<GeminiContent>,
-    @Json(name = "system_instruction") val systemInstruction: GeminiContent? = null,
+    @param:Json(name = "system_instruction") val systemInstruction: GeminiContent? = null,
     val generationConfig: GeminiGenerationConfig? = null
 )
 

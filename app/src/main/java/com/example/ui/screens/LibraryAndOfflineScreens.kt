@@ -12,8 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -205,7 +204,7 @@ private fun DocumentLibraryCard(
                 Icon(
                     imageVector = when (doc.category.lowercase()) {
                         "government" -> Icons.Filled.AccountBalance
-                        "bills" -> Icons.Filled.ReceiptLong
+                        "bills" -> Icons.AutoMirrored.Filled.ReceiptLong
                         "school" -> Icons.Filled.School
                         else -> Icons.Filled.Description
                     },
@@ -291,7 +290,7 @@ fun DocumentDetailScreen(
                 IconButton(onClick = {
                     selectedDoc?.let { viewModel.speak(it.summary) }
                 }) {
-                    Icon(Icons.Filled.VolumeUp, contentDescription = "Listen", tint = ElectricCyan)
+                    Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Listen", tint = ElectricCyan)
                 }
             }
         },

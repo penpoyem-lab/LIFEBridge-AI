@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -31,6 +31,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.ui.theme.*
 
 @Composable
@@ -325,374 +330,463 @@ fun LifeBridgeBottomBar(
     currentScreen: String,
     onNavigate: (String) -> Unit
 ) {
-    val isHomeSelected = currentScreen == "home"
-    val isUnderstandSelected = currentScreen in listOf("understand", "universal_input", "scanner", "processing_progress", "explanation_results", "action_cards", "translation", "voice", "voice_translate")
-    val isSafetySelected = currentScreen in listOf("safety", "safety_checker", "safety_results", "link_safety")
-    val isLibrarySelected = currentScreen in listOf("library", "document_detail", "offline_kit", "reminders", "search")
-    val isProfileSelected = currentScreen in listOf("profile", "settings", "privacy_security", "help_support")
-
     val isDark = MaterialTheme.colorScheme.background == UmbraDarkBg
 
-    // Floating Composite Glacier Liquid Navigation Bar
-    Row(
+    // Categorize active screen
+    val isHome = currentScreen == "home"
+    val isUnderstand = currentScreen in listOf("understand", "universal_input", "scanner", "processing_progress", "explanation_results", "action_cards", "translation", "voice", "voice_translate", "live_voice")
+    val isSafety = currentScreen in listOf("safety", "safety_checker", "safety_results", "link_safety")
+    val isLibrary = currentScreen in listOf("library", "document_detail", "offline_kit", "reminders")
+    val isProfile = currentScreen in listOf("profile", "search", "notifications", "settings", "privacy_permissions", "help_support", "account_management", "empty_state", "loading_state", "offline_state", "error_state", "retry_state")
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .padding(horizontal = 10.dp, vertical = 8.dp)
             .testTag("bottom_navigation_bar"),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.Center
     ) {
-        // 1. Left Floating Circular Glass Orb (Home)
-        val homeScale by animateFloatAsState(
-            targetValue = if (isHomeSelected) 1.08f else 1.0f,
-            animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMedium),
-            label = "home_orb_scale"
-        )
-
-        Box(
+        Row(
             modifier = Modifier
-                .size(54.dp)
-                .scale(homeScale)
-                .shadow(
-                    elevation = if (isHomeSelected) 14.dp else 8.dp,
-                    shape = CircleShape,
-                    spotColor = if (isDark) Color(0x66000000) else Color(0x33000000)
-                )
-                .clip(CircleShape)
-                .background(
-                    brush = if (isDark) {
-                        if (isHomeSelected) {
-                            Brush.linearGradient(listOf(Color(0xFF383842), Color(0xFF222228)))
-                        } else {
-                            Brush.linearGradient(listOf(Color(0xFF25252C), Color(0xFF16161A)))
-                        }
-                    } else {
-                        if (isHomeSelected) {
-                            Brush.linearGradient(listOf(Color(0xFFD6D6DE), Color(0xFFB8B8C2)))
-                        } else {
-                            Brush.linearGradient(listOf(Color(0xFFF2F2F7), Color(0xFFE5E5EA)))
-                        }
-                    }
-                )
-                .border(
-                    width = 1.4.dp,
-                    brush = Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = if (isDark) 0.55f else 0.95f),
-                            Color.White.copy(alpha = if (isDark) 0.10f else 0.40f)
-                        )
-                    ),
-                    shape = CircleShape
-                )
-                .clickable { onNavigate("home") }
-                .testTag("nav_item_home"),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .widthIn(max = 440.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Top-lit 3D glass spherical highlight
+            // ==========================================================
+            // 1. LEFT ORB: 3D Spherical Liquid Glass Home Button
+            // ==========================================================
+            val homeScale by animateFloatAsState(
+                targetValue = if (isHome) 1.08f else 1.0f,
+                animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMediumLow),
+                label = "home_orb_scale"
+            )
+
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.48f)
-                    .align(Alignment.TopCenter)
-                    .clip(RoundedCornerShape(topStart = 27.dp, topEnd = 27.dp))
-                    .background(
-                        brush = Brush.verticalGradient(
-                            listOf(
-                                Color.White.copy(alpha = if (isDark) 0.35f else 0.60f),
-                                Color.Transparent
-                            )
-                        )
+                    .size(54.dp)
+                    .scale(homeScale)
+                    .shadow(
+                        elevation = 14.dp,
+                        shape = CircleShape,
+                        spotColor = if (isDark) Color(0x88000000) else Color(0x35000000),
+                        ambientColor = if (isDark) Color(0x55000000) else Color(0x20000000)
                     )
-            )
-
-            Icon(
-                imageVector = Icons.Filled.Home,
-                contentDescription = "Home",
-                tint = if (isDark) {
-                    if (isHomeSelected) Color.White else Color(0xFFA0A0AA)
-                } else {
-                    if (isHomeSelected) Color(0xFF111114) else Color(0xFF555560)
-                },
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        // 2. Center Floating Glacier Liquid Glass Capsule
-        val activeTitle = when {
-            isUnderstandSelected -> "Understand Docs"
-            isSafetySelected -> "Safety Shield"
-            isLibrarySelected -> "Life Library"
-            isProfileSelected -> "Alex Profile"
-            else -> "LIFEBridge Active"
-        }
-
-        val activeIcon = when {
-            isUnderstandSelected -> Icons.Filled.Lightbulb
-            isSafetySelected -> Icons.Filled.Shield
-            isLibrarySelected -> Icons.Filled.Folder
-            isProfileSelected -> Icons.Filled.Person
-            else -> Icons.Filled.AutoAwesome
-        }
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(58.dp)
-                .shadow(
-                    elevation = 16.dp,
-                    shape = RoundedCornerShape(29.dp),
-                    spotColor = if (isDark) Color(0x66000000) else Color(0x388CE8FF),
-                    ambientColor = if (isDark) Color(0x33000000) else Color(0x22D69EFF)
-                )
-                .clip(RoundedCornerShape(29.dp))
-                .background(
-                    brush = if (isDark) {
-                        Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xD82A2B35),
-                                Color(0xEE1A1B22),
-                                Color(0xD824252E)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(200f, 100f)
-                        )
-                    } else {
-                        // High-contrast vibrant glacier liquid aurora gradient
-                        Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFF8CE8FF).copy(alpha = 0.85f),
-                                Color(0xFFFFB28E).copy(alpha = 0.82f),
-                                Color(0xFFFFD479).copy(alpha = 0.78f),
-                                Color(0xFFD69EFF).copy(alpha = 0.85f),
-                                Color(0xFFEAF5FF).copy(alpha = 0.95f)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(300f, 120f)
-                        )
-                    }
-                )
-                .border(
-                    width = 1.35.dp,
-                    brush = Brush.verticalGradient(
-                        0.0f to Color.White.copy(alpha = if (isDark) 0.65f else 0.98f),
-                        0.5f to Color(0xFF8CE8FF).copy(alpha = 0.40f),
-                        1.0f to Color.White.copy(alpha = if (isDark) 0.10f else 0.35f)
-                    ),
-                    shape = RoundedCornerShape(29.dp)
-                )
-                .padding(horizontal = 6.dp, vertical = 5.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            // Upper specular reflection arc inside capsule
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.48f)
-                    .align(Alignment.TopCenter)
-                    .clip(RoundedCornerShape(topStart = 29.dp, topEnd = 29.dp))
+                    .clip(CircleShape)
                     .background(
-                        brush = Brush.verticalGradient(
-                            listOf(
-                                Color.White.copy(alpha = if (isDark) 0.22f else 0.45f),
-                                Color.Transparent
+                        brush = if (isDark) {
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFF5A524A),
+                                    Color(0xFF332D28),
+                                    Color(0xFF191716)
+                                ),
+                                center = Offset(45f, 40f),
+                                radius = 90f
                             )
-                        )
+                        } else {
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFFE8E1D5),
+                                    Color(0xFFC7BFAE),
+                                    Color(0xFF8F877A)
+                                ),
+                                center = Offset(45f, 40f),
+                                radius = 90f
+                            )
+                        }
                     )
-            )
-
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .border(
+                        width = 1.35.dp,
+                        brush = Brush.verticalGradient(
+                            0.0f to Color.White.copy(alpha = if (isDark) 0.85f else 0.95f),
+                            0.45f to Color.White.copy(alpha = if (isDark) 0.30f else 0.50f),
+                            1.0f to Color.White.copy(alpha = if (isDark) 0.60f else 0.75f)
+                        ),
+                        shape = CircleShape
+                    )
+                    .clickable { onNavigate("home") }
+                    .testTag("nav_item_home"),
+                contentAlignment = Alignment.Center
             ) {
-                // Mini squircle thumbnail card
+                // Top crescent reflection highlight
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
-                        .shadow(elevation = 4.dp, shape = RoundedCornerShape(14.dp))
-                        .clip(RoundedCornerShape(14.dp))
+                        .fillMaxWidth(0.85f)
+                        .height(18.dp)
+                        .align(Alignment.TopCenter)
+                        .offset(y = 2.dp)
+                        .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
                         .background(
-                            if (isDark) Color(0xFF2C2D38) else Color(0xCCFFFFFF)
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(alpha = if (isDark) 0.35f else 0.55f),
+                                    Color.Transparent
+                                )
+                            )
                         )
-                        .border(
-                            width = 1.dp,
-                            color = Color.White.copy(alpha = 0.75f),
-                            shape = RoundedCornerShape(14.dp)
-                        )
-                        .clickable {
-                            val target = when {
-                                isUnderstandSelected -> "universal_input"
-                                isSafetySelected -> "safety_checker"
-                                isLibrarySelected -> "library"
-                                else -> "universal_input"
-                            }
-                            onNavigate(target)
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = activeIcon,
-                        contentDescription = activeTitle,
-                        tint = if (isDark) Color(0xFF8CE8FF) else Color(0xFF14151A),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                )
 
-                // Center Navigation Tabs & Title
-                Row(
-                    modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Understand Tab
-                    IconButton(
-                        onClick = { onNavigate("universal_input") },
-                        modifier = Modifier.size(36.dp).testTag("nav_item_understand")
-                    ) {
-                        Icon(
-                            imageVector = if (isUnderstandSelected) Icons.Filled.Lightbulb else Icons.Outlined.Lightbulb,
-                            contentDescription = "Understand",
-                            tint = if (isUnderstandSelected) {
-                                if (isDark) Color(0xFF8CE8FF) else Color(0xFF111115)
-                            } else {
-                                if (isDark) Color(0xFF8E8E98) else Color(0xAA111115)
-                            },
-                            modifier = Modifier.size(if (isUnderstandSelected) 23.dp else 19.dp)
-                        )
-                    }
+                // Bold black Home Icon matching the screenshot
+                Icon(
+                    imageVector = Icons.Filled.Home,
+                    contentDescription = "Home",
+                    tint = if (isHome) {
+                        if (isDark) Color(0xFF0F0E0D) else Color(0xFF151311)
+                    } else {
+                        if (isDark) Color(0xFF221F1D) else Color(0xFF2C2825)
+                    },
+                    modifier = Modifier.size(24.dp)
+                )
 
-                    // Safety Tab
-                    IconButton(
-                        onClick = { onNavigate("safety_checker") },
-                        modifier = Modifier.size(36.dp).testTag("nav_item_safety")
-                    ) {
-                        Icon(
-                            imageVector = if (isSafetySelected) Icons.Filled.Shield else Icons.Outlined.Shield,
-                            contentDescription = "Safety",
-                            tint = if (isSafetySelected) {
-                                if (isDark) Color(0xFF8CE8FF) else Color(0xFF111115)
-                            } else {
-                                if (isDark) Color(0xFF8E8E98) else Color(0xAA111115)
-                            },
-                            modifier = Modifier.size(if (isSafetySelected) 23.dp else 19.dp)
-                        )
-                    }
-
-                    // Library Tab
-                    IconButton(
-                        onClick = { onNavigate("library") },
-                        modifier = Modifier.size(36.dp).testTag("nav_item_library")
-                    ) {
-                        Icon(
-                            imageVector = if (isLibrarySelected) Icons.Filled.Folder else Icons.Outlined.Folder,
-                            contentDescription = "Library",
-                            tint = if (isLibrarySelected) {
-                                if (isDark) Color(0xFF8CE8FF) else Color(0xFF111115)
-                            } else {
-                                if (isDark) Color(0xFF8E8E98) else Color(0xAA111115)
-                            },
-                            modifier = Modifier.size(if (isLibrarySelected) 23.dp else 19.dp)
-                        )
-                    }
-                }
-
-                // Forward Play/Action Arrow inside Glacier Capsule
-                Box(
+                // Edge triangle cue pointing right into the capsule
+                Canvas(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isDark) Color(0x33FFFFFF) else Color(0x28000000)
-                        )
-                        .clickable {
-                            val nextTarget = when {
-                                isHomeSelected -> "universal_input"
-                                isUnderstandSelected -> "voice_translate"
-                                isSafetySelected -> "offline_kit"
-                                else -> "universal_input"
-                            }
-                            onNavigate(nextTarget)
-                        },
-                    contentAlignment = Alignment.Center
+                        .size(6.dp, 8.dp)
+                        .align(Alignment.CenterEnd)
+                        .offset(x = (-3).dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = "Action",
-                        tint = if (isDark) Color.White else Color(0xFF111115),
-                        modifier = Modifier.size(20.dp)
-                    )
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(size.width, size.height / 2f)
+                        lineTo(0f, size.height)
+                        close()
+                    }
+                    drawPath(path, color = Color.White.copy(alpha = 0.90f))
                 }
             }
-        }
 
-        // 3. Right Floating Circular Glass Orb (Profile / Search with Magenta/Violet Glow)
-        val profileScale by animateFloatAsState(
-            targetValue = if (isProfileSelected) 1.08f else 1.0f,
-            animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMedium),
-            label = "profile_orb_scale"
-        )
-
-        Box(
-            modifier = Modifier
-                .size(54.dp)
-                .scale(profileScale)
-                .shadow(
-                    elevation = if (isProfileSelected) 16.dp else 10.dp,
-                    shape = CircleShape,
-                    spotColor = Color(0x889C27B0),
-                    ambientColor = Color(0x55D69EFF)
-                )
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFFD69EFF),
-                            Color(0xFFBA68C8),
-                            Color(0xFF8E24AA)
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(100f, 100f)
-                    )
-                )
-                .border(
-                    width = 1.4.dp,
-                    brush = Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = 0.95f),
-                            Color(0xFFD69EFF).copy(alpha = 0.60f),
-                            Color.White.copy(alpha = 0.20f)
-                        )
-                    ),
-                    shape = CircleShape
-                )
-                .clickable { onNavigate("profile") }
-                .testTag("nav_item_profile"),
-            contentAlignment = Alignment.Center
-        ) {
-            // Spherical 3D glass dome reflection
+            // ==========================================================
+            // 2. CENTER FLOATING LIQUID GLASS CAPSULE (Glacier Aurora)
+            // ==========================================================
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.48f)
-                    .align(Alignment.TopCenter)
-                    .clip(RoundedCornerShape(topStart = 27.dp, topEnd = 27.dp))
+                    .weight(1f)
+                    .height(58.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = RoundedCornerShape(29.dp),
+                        spotColor = if (isDark) Color(0x66000000) else Color(0x30000000),
+                        ambientColor = if (isDark) Color(0x40F9B588) else Color(0x25F9B588)
+                    )
+                    .clip(RoundedCornerShape(29.dp))
                     .background(
+                        brush = if (isDark) {
+                            // Dark mode iridescent glacier/aurora liquid glass
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0x603E3E4C),
+                                    Color(0x45244158),
+                                    Color(0x505E3C36),
+                                    Color(0x65754526),
+                                    Color(0x55582D4A)
+                                )
+                            )
+                        } else {
+                            // Light mode glacier liquid glass with peach/amber & frosted cyan
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0x95F7F8FB),
+                                    Color(0x85D0E3F2),
+                                    Color(0x92F8D0BF),
+                                    Color(0x9CFBB27D),
+                                    Color(0x8CEB976E)
+                                )
+                            )
+                        }
+                    )
+                    .border(
+                        width = 1.35.dp,
                         brush = Brush.verticalGradient(
-                            listOf(
-                                Color.White.copy(alpha = 0.55f),
-                                Color.Transparent
+                            0.0f to Color.White.copy(alpha = if (isDark) 0.85f else 0.98f),
+                            0.45f to Color.White.copy(alpha = if (isDark) 0.25f else 0.45f),
+                            1.0f to if (isDark) Color(0xFFFFD4AF).copy(alpha = 0.50f) else Color(0xFFFFBE8F).copy(alpha = 0.70f)
+                        ),
+                        shape = RoundedCornerShape(29.dp)
+                    )
+                    .padding(horizontal = 7.dp, vertical = 6.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                // Top edge specular sheen ribbon
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.2.dp)
+                        .padding(horizontal = 16.dp)
+                        .align(Alignment.TopCenter)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color.White.copy(alpha = if (isDark) 0.70f else 0.95f),
+                                    Color.Transparent
+                                )
                             )
                         )
-                    )
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // --- Left Squircle Preview Thumbnail Card ---
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .shadow(4.dp, RoundedCornerShape(11.dp), spotColor = Color(0x30000000))
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(
+                                brush = when {
+                                    isUnderstand -> Brush.linearGradient(listOf(Color(0xFF0EA5E9), Color(0xFF1E293B)))
+                                    isSafety -> Brush.linearGradient(listOf(Color(0xFFEF4444), Color(0xFF7F1D1D)))
+                                    isLibrary -> Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFF312E81)))
+                                    else -> Brush.linearGradient(listOf(Color(0xFF475569), Color(0xFF0F172A)))
+                                }
+                            )
+                            .border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(11.dp))
+                            .clickable {
+                                when {
+                                    isUnderstand -> onNavigate("universal_input")
+                                    isSafety -> onNavigate("safety_checker")
+                                    isLibrary -> onNavigate("library")
+                                    else -> onNavigate("universal_input")
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = when {
+                                isUnderstand -> Icons.Filled.Lightbulb
+                                isSafety -> Icons.Filled.Shield
+                                isLibrary -> Icons.Filled.Folder
+                                else -> Icons.Filled.AutoAwesome
+                            },
+                            contentDescription = "Active Preview",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // --- Center Interactive Tabs (Understand, Safety, Library) with Italic Active Label ---
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val centerTabs = listOf(
+                            Triple("understand", "Understand", Icons.Filled.Lightbulb as ImageVector),
+                            Triple("safety", "Safety", Icons.Filled.Shield as ImageVector),
+                            Triple("library", "Library", Icons.Filled.Folder as ImageVector)
+                        )
+
+                        centerTabs.forEach { tab ->
+                            val route = tab.first
+                            val label = tab.second
+                            val icon = tab.third
+                            val isSelected = when (route) {
+                                "understand" -> isUnderstand
+                                "safety" -> isSafety
+                                "library" -> isLibrary
+                                else -> false
+                            }
+
+                            val tabScale by animateFloatAsState(
+                                targetValue = if (isSelected) 1.05f else 1.0f,
+                                animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMediumLow),
+                                label = "tab_scale_${route}"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .scale(tabScale)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier
+                                                .background(
+                                                    brush = Brush.verticalGradient(
+                                                        listOf(
+                                                            Color.White.copy(alpha = if (isDark) 0.35f else 0.55f),
+                                                            Color.White.copy(alpha = if (isDark) 0.15f else 0.30f)
+                                                        )
+                                                    )
+                                                )
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = Color.White.copy(alpha = 0.65f),
+                                                    shape = RoundedCornerShape(16.dp)
+                                                )
+                                        } else Modifier
+                                    )
+                                    .clickable {
+                                        val target = when (route) {
+                                            "understand" -> "universal_input"
+                                            "safety" -> "safety_checker"
+                                            else -> route
+                                        }
+                                        onNavigate(target)
+                                    }
+                                    .padding(horizontal = if (isSelected) 7.dp else 4.dp, vertical = 4.dp)
+                                    .testTag("nav_item_${route}"),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = label,
+                                        tint = if (isSelected) {
+                                            if (isDark) Color.White else Color(0xFF101217)
+                                        } else {
+                                            if (isDark) Color(0xFFB5BAC7) else Color(0xFF4A4E5A)
+                                        },
+                                        modifier = Modifier.size(if (isSelected) 17.dp else 16.dp)
+                                    )
+
+                                    if (isSelected) {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontFamily = FontFamily.Serif,
+                                                fontStyle = FontStyle.Italic,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 11.sp,
+                                                letterSpacing = 0.2.sp
+                                            ),
+                                            color = if (isDark) Color.White else Color(0xFF101217),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // --- Right Black Play Action Button ▶ ---
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isDark) Color(0xCC000000) else Color(0xE60A0A0A)
+                            )
+                            .clickable {
+                                // Quick action: launches voice assistant or universal input
+                                onNavigate("voice_translate")
+                            }
+                            .testTag("bottom_bar_play_action"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(modifier = Modifier.size(9.dp, 11.dp)) {
+                            val path = Path().apply {
+                                moveTo(0f, 0f)
+                                lineTo(size.width, size.height / 2f)
+                                lineTo(0f, size.height)
+                                close()
+                            }
+                            drawPath(path, color = Color.White)
+                        }
+                    }
+                }
+            }
+
+            // ==========================================================
+            // 3. RIGHT ORB: Magenta/Amethyst Glowing Liquid Glass Button
+            // ==========================================================
+            val profileScale by animateFloatAsState(
+                targetValue = if (isProfile) 1.08f else 1.0f,
+                animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMediumLow),
+                label = "profile_orb_scale"
             )
 
-            Icon(
-                imageVector = Icons.Filled.Person,
-                contentDescription = "Profile",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .scale(profileScale)
+                    .shadow(
+                        elevation = 14.dp,
+                        shape = CircleShape,
+                        spotColor = Color(0x77D81B60),
+                        ambientColor = Color(0x44D81B60)
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFE85FB4),
+                                Color(0xFFC02A88),
+                                Color(0xFF6B104E)
+                            ),
+                            center = Offset(45f, 40f),
+                            radius = 90f
+                        )
+                    )
+                    .border(
+                        width = 1.35.dp,
+                        brush = Brush.verticalGradient(
+                            0.0f to Color.White.copy(alpha = 0.92f),
+                            0.5f to Color(0xFFFFB6EA).copy(alpha = 0.45f),
+                            1.0f to Color.White.copy(alpha = 0.70f)
+                        ),
+                        shape = CircleShape
+                    )
+                    .clickable { onNavigate("profile") }
+                    .testTag("nav_item_profile"),
+                contentAlignment = Alignment.Center
+            ) {
+                // Top crescent glass highlight
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(18.dp)
+                        .align(Alignment.TopCenter)
+                        .offset(y = 2.dp)
+                        .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.50f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                // Bold black Search / Magnifying Glass Icon matching the screenshot
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search & Profile",
+                    tint = Color(0xFF140810),
+                    modifier = Modifier.size(24.dp)
+                )
+
+                // Edge triangle cue pointing rightward
+                Canvas(
+                    modifier = Modifier
+                        .size(6.dp, 8.dp)
+                        .align(Alignment.CenterEnd)
+                        .offset(x = (-3).dp)
+                ) {
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(size.width, size.height / 2f)
+                        lineTo(0f, size.height)
+                        close()
+                    }
+                    drawPath(path, color = Color.White.copy(alpha = 0.90f))
+                }
+            }
         }
     }
 }
@@ -840,7 +934,7 @@ fun AestheticNoteRecallCard(
                         horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.VolumeUp,
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = "Listen",
                             tint = PureWhite,
                             modifier = Modifier.size(14.dp)

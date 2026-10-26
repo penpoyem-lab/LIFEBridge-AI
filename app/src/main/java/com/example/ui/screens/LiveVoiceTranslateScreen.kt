@@ -14,7 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -232,7 +232,7 @@ fun LiveVoiceTranslateScreen(
                                     onClick = { viewModel.speak(lastPartnerMessage.translatedText) },
                                     modifier = Modifier.size(32.dp)
                                 ) {
-                                    Icon(Icons.Filled.VolumeUp, contentDescription = "Speak", tint = Umbra, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Speak", tint = Umbra, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -393,7 +393,7 @@ fun LiveVoiceTranslateScreen(
                                 onClick = { viewModel.speak(if (lastYourMessage.speaker == "Partner") lastYourMessage.translatedText else lastYourMessage.originalText) },
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Filled.VolumeUp, contentDescription = "Speak", tint = Umbra, modifier = Modifier.size(18.dp))
+                                Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Speak", tint = Umbra, modifier = Modifier.size(18.dp))
                             }
                         }
                     }

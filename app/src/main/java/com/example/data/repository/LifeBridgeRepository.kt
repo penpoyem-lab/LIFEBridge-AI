@@ -10,6 +10,7 @@ import com.example.data.model.*
 import com.example.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -26,6 +27,7 @@ class LifeBridgeRepository(
     private val safetyDao = database.safetyCheckDao()
     private val emergencyDao = database.emergencyContactDao()
     private val recallDao = database.noteRecallDao()
+    private val chatDao = database.chatMessageDao()
 
     val allDocuments: Flow<List<DocumentEntity>> = docDao.getAllDocuments()
     val allCards: Flow<List<ActionCardEntity>> = cardDao.getAllCards()
@@ -33,6 +35,38 @@ class LifeBridgeRepository(
     val emergencyContacts: Flow<List<EmergencyContactEntity>> = emergencyDao.getAllEmergencyContacts()
     val activeNoteRecalls: Flow<List<com.example.data.local.entities.NoteRecallEntity>> = recallDao.getActiveRecalls()
     val allNoteRecalls: Flow<List<com.example.data.local.entities.NoteRecallEntity>> = recallDao.getAllRecalls()
+
+    val allChatMessages: Flow<List<ChatMessage>> = chatDao.getAllMessages().map { list ->
+        list.map { entity ->
+            ChatMessage(
+                id = entity.id,
+                text = entity.text,
+                sender = if (entity.sender == "USER") MessageSender.USER else MessageSender.ASSISTANT,
+                timestamp = entity.timestamp,
+                actionLabel = entity.actionLabel,
+                actionRoute = entity.actionRoute,
+                isError = entity.isError
+            )
+        }
+    }
+
+    suspend fun saveChatMessage(message: ChatMessage) = withContext(Dispatchers.IO) {
+        chatDao.insertMessage(
+            com.example.data.local.entities.ChatMessageEntity(
+                id = message.id,
+                text = message.text,
+                sender = message.sender.name,
+                timestamp = message.timestamp,
+                actionLabel = message.actionLabel,
+                actionRoute = message.actionRoute,
+                isError = message.isError
+            )
+        )
+    }
+
+    suspend fun clearChatHistory() = withContext(Dispatchers.IO) {
+        chatDao.clearAllMessages()
+    }
 
     suspend fun snoozeRecall(id: String, newTime: String = "Snoozed +1h") = withContext(Dispatchers.IO) {
         recallDao.snooze(id, newTime)

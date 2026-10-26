@@ -52,7 +52,7 @@ class UserPreferencesRepository(private val context: Context) {
     }
 
     val isOnboardedFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
-        prefs[KEY_ONBOARDED] ?: true // Set default so user can directly explore dashboard, or switch in onboarding
+        prefs[KEY_ONBOARDED] ?: false
     }
 
     val authTokenFlow: Flow<String?> = context.dataStore.data.map { prefs ->

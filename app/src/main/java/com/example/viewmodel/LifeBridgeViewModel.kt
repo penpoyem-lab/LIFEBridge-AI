@@ -139,15 +139,17 @@ class LifeBridgeViewModel(application: Application) : AndroidViewModel(applicati
     private val _chatbotOffsetY = MutableStateFlow(0f)
     val chatbotOffsetY: StateFlow<Float> = _chatbotOffsetY.asStateFlow()
 
-    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(
-        listOf(
-            ChatMessage(
-                text = "Hello! I am your LIFEBridge Assistant. I can help you decode complex documents, verify potential scams, translate conversations live, or organize your emergency kits. How can I help you today?",
-                sender = MessageSender.ASSISTANT
+    val chatMessages: StateFlow<List<ChatMessage>> = repository.allChatMessages
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            listOf(
+                ChatMessage(
+                    text = "Hello! I am your LIFEBridge Assistant. I can help you decode complex documents, verify potential scams, translate conversations live, or organize your emergency kits. How can I help you today?",
+                    sender = MessageSender.ASSISTANT
+                )
             )
         )
-    )
-    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
 
     fun toggleChatbot(open: Boolean) {
         _isChatbotOpen.value = open
@@ -164,30 +166,34 @@ class LifeBridgeViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun clearChatMessages() {
-        _chatMessages.value = listOf(
-            ChatMessage(
-                text = "Chat history refreshed. How can I help you now?",
+        viewModelScope.launch {
+            repository.clearChatHistory()
+            val resetMsg = ChatMessage(
+                text = "Chat history cleared. How can I help you now?",
                 sender = MessageSender.ASSISTANT
             )
-        )
+            repository.saveChatMessage(resetMsg)
+        }
     }
 
     fun sendChatMessage(text: String) {
         if (text.isBlank()) return
         val userMsg = ChatMessage(text = text.trim(), sender = MessageSender.USER)
-        _chatMessages.value = _chatMessages.value + userMsg
         _isChatbotThinking.value = true
 
         viewModelScope.launch {
+            repository.saveChatMessage(userMsg)
             try {
-                val assistantMsg = chatbotRepository.getAssistantResponse(text, _chatMessages.value)
-                _chatMessages.value = _chatMessages.value + assistantMsg
+                val currentHistory = chatMessages.value
+                val assistantMsg = chatbotRepository.getAssistantResponse(text, currentHistory)
+                repository.saveChatMessage(assistantMsg)
             } catch (e: Exception) {
-                _chatMessages.value = _chatMessages.value + ChatMessage(
+                val errorMsg = ChatMessage(
                     text = "I encountered an issue processing your request. Please try again.",
                     sender = MessageSender.ASSISTANT,
                     isError = true
                 )
+                repository.saveChatMessage(errorMsg)
             } finally {
                 _isChatbotThinking.value = false
             }

@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -130,10 +130,10 @@ fun AccountProfileScreen(
 
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 ProfileOptionRow(icon = Icons.Filled.Settings, title = "App Settings", onClick = { onNavigate("settings") })
-                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 ProfileOptionRow(icon = Icons.Filled.Lock, title = "Privacy & Permissions", onClick = { onNavigate("privacy_security") })
-                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                ProfileOptionRow(icon = Icons.Filled.HelpOutline, title = "Help & Support", onClick = { onNavigate("help_support") })
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                ProfileOptionRow(icon = Icons.AutoMirrored.Filled.HelpOutline, title = "Help & Support", onClick = { onNavigate("help_support") })
             }
 
             Text(
@@ -155,7 +155,7 @@ fun AccountProfileScreen(
                         }
                     }
                 )
-                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 ProfileOptionRow(
                     icon = Icons.Filled.DeleteForever,
                     title = "Delete Account & Clear Storage",

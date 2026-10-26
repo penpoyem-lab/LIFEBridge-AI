@@ -6,11 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.local.dao.ActionCardDao
+import com.example.data.local.dao.ChatMessageDao
 import com.example.data.local.dao.DocumentDao
 import com.example.data.local.dao.EmergencyContactDao
 import com.example.data.local.dao.NoteRecallDao
 import com.example.data.local.dao.SafetyCheckDao
 import com.example.data.local.entities.ActionCardEntity
+import com.example.data.local.entities.ChatMessageEntity
 import com.example.data.local.entities.DocumentEntity
 import com.example.data.local.entities.EmergencyContactEntity
 import com.example.data.local.entities.NoteRecallEntity
@@ -25,9 +27,10 @@ import kotlinx.coroutines.launch
         ActionCardEntity::class,
         SafetyCheckEntity::class,
         EmergencyContactEntity::class,
-        NoteRecallEntity::class
+        NoteRecallEntity::class,
+        ChatMessageEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class LifeBridgeDatabase : RoomDatabase() {
@@ -36,6 +39,7 @@ abstract class LifeBridgeDatabase : RoomDatabase() {
     abstract fun safetyCheckDao(): SafetyCheckDao
     abstract fun emergencyContactDao(): EmergencyContactDao
     abstract fun noteRecallDao(): NoteRecallDao
+    abstract fun chatMessageDao(): ChatMessageDao
 
     companion object {
         @Volatile
@@ -49,7 +53,7 @@ abstract class LifeBridgeDatabase : RoomDatabase() {
                     "lifebridge_database"
                 )
                     .addCallback(DatabaseCallback())
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(true)
                     .build()
                 INSTANCE = instance
                 instance
@@ -209,6 +213,15 @@ abstract class LifeBridgeDatabase : RoomDatabase() {
                 audioNoteText = "Important notice: Ensure your signed domicile certificate is uploaded to the student scholarship portal."
             )
             database.noteRecallDao().insertRecalls(listOf(recall1, recall2, recall3))
+
+            // Seed Initial Chatbot Welcome Message
+            val initialWelcome = ChatMessageEntity(
+                id = "welcome_msg_001",
+                text = "Hello! I am your LIFEBridge Assistant. I can help you decode complex documents, verify potential scams, translate conversations live, or organize your emergency kits. How can I help you today?",
+                sender = "ASSISTANT",
+                timestamp = System.currentTimeMillis()
+            )
+            database.chatMessageDao().insertMessage(initialWelcome)
         }
     }
 }

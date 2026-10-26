@@ -21,8 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -673,7 +672,7 @@ fun ExplanationResultsScreen(
                 IconButton(onClick = {
                     explanation?.let { viewModel.speak(it.summary) }
                 }) {
-                    Icon(Icons.Filled.VolumeUp, contentDescription = "Listen", tint = ElectricCyan)
+                    Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Listen", tint = ElectricCyan)
                 }
             }
         },
@@ -887,7 +886,7 @@ fun ExplanationResultsScreen(
                                     verticalAlignment = Alignment.Top
                                 ) {
                                     Icon(
-                                        Icons.Filled.HelpOutline,
+                                        Icons.AutoMirrored.Filled.HelpOutline,
                                         contentDescription = null,
                                         tint = WarningAmber,
                                         modifier = Modifier.size(16.dp)

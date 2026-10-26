@@ -45,6 +45,8 @@ fun LifeBridgeApp(viewModel: LifeBridgeViewModel) {
         }
     }
 
+    val isOnboarded by viewModel.isOnboarded.collectAsState()
+
     // Android Hardware / Gesture Back Handling
     if (currentScreen != "home" && currentScreen != "splash") {
         BackHandler {
@@ -69,7 +71,10 @@ fun LifeBridgeApp(viewModel: LifeBridgeViewModel) {
         Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             when (currentScreen) {
                 "splash" -> SplashScreen(
-                    onTimeout = { viewModel.navigateTo("home") }
+                    onTimeout = {
+                        if (isOnboarded) viewModel.navigateTo("home")
+                        else viewModel.navigateTo("onboarding")
+                    }
                 )
                 "onboarding_1", "onboarding" -> OnboardingScreen(
                     viewModel = viewModel,

@@ -14,7 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -182,7 +182,7 @@ fun TranslationScreen(
                             }
 
                             IconButton(onClick = { viewModel.speak(output) }) {
-                                Icon(Icons.Filled.VolumeUp, contentDescription = "Speak", tint = ElectricCyan)
+                                Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Speak", tint = ElectricCyan)
                             }
                         }
                     }
@@ -383,7 +383,7 @@ fun VoiceAssistantScreen(
                         }
 
                         IconButton(onClick = { viewModel.speak(response) }) {
-                            Icon(Icons.Filled.VolumeUp, contentDescription = "Play Response", tint = ElectricCyan)
+                            Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Play Response", tint = ElectricCyan)
                         }
                     }
 
