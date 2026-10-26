@@ -1,0 +1,6 @@
+{
+  "name": "LIFEBridge AI",
+  "description": "Understand More. Worry Less. Take the Next Step.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

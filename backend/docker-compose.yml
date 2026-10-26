@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: lifebridge_api
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - DATABASE_URL=postgresql://lifebridge:secure_pass@db:5432/lifebridge_db
+      - REDIS_URL=redis://redis:6379/0
+      - APP_SECRET_KEY=dev_secret_key_change_in_production
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:16-alpine
+    container_name: lifebridge_db
+    environment:
+      - POSTGRES_USER=lifebridge
+      - POSTGRES_PASSWORD=secure_pass
+      - POSTGRES_DB=lifebridge_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: lifebridge_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
