@@ -463,63 +463,81 @@ fun LifeBridgeBottomBar(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(58.dp)
+                    .height(60.dp)
                     .shadow(
-                        elevation = 16.dp,
-                        shape = RoundedCornerShape(29.dp),
-                        spotColor = if (isDark) Color(0x66000000) else Color(0x30000000),
-                        ambientColor = if (isDark) Color(0x40F9B588) else Color(0x25F9B588)
+                        elevation = 18.dp,
+                        shape = RoundedCornerShape(30.dp),
+                        spotColor = if (isDark) Color(0x88000000) else Color(0x35000000),
+                        ambientColor = if (isDark) Color(0x55F9B588) else Color(0x30F9B588)
                     )
-                    .clip(RoundedCornerShape(29.dp))
+                    .clip(RoundedCornerShape(30.dp))
                     .background(
                         brush = if (isDark) {
                             // Dark mode iridescent glacier/aurora liquid glass
                             Brush.horizontalGradient(
                                 colors = listOf(
-                                    Color(0x603E3E4C),
-                                    Color(0x45244158),
-                                    Color(0x505E3C36),
-                                    Color(0x65754526),
-                                    Color(0x55582D4A)
+                                    Color(0x752E303D),
+                                    Color(0x601E3547),
+                                    Color(0x654A302D),
+                                    Color(0x705A3720),
+                                    Color(0x6045233A)
                                 )
                             )
                         } else {
                             // Light mode glacier liquid glass with peach/amber & frosted cyan
                             Brush.horizontalGradient(
                                 colors = listOf(
-                                    Color(0x95F7F8FB),
-                                    Color(0x85D0E3F2),
-                                    Color(0x92F8D0BF),
-                                    Color(0x9CFBB27D),
-                                    Color(0x8CEB976E)
+                                    Color(0xA5FFFFFF),
+                                    Color(0x90D8E9F6),
+                                    Color(0x98FCE2D4),
+                                    Color(0xA0FED0B2),
+                                    Color(0x92F8B79B)
                                 )
                             )
                         }
                     )
                     .border(
-                        width = 1.35.dp,
+                        width = 1.4.dp,
                         brush = Brush.verticalGradient(
-                            0.0f to Color.White.copy(alpha = if (isDark) 0.85f else 0.98f),
-                            0.45f to Color.White.copy(alpha = if (isDark) 0.25f else 0.45f),
-                            1.0f to if (isDark) Color(0xFFFFD4AF).copy(alpha = 0.50f) else Color(0xFFFFBE8F).copy(alpha = 0.70f)
+                            0.0f to Color.White.copy(alpha = if (isDark) 0.90f else 0.98f),
+                            0.35f to Color.White.copy(alpha = if (isDark) 0.40f else 0.65f),
+                            0.70f to Color.White.copy(alpha = if (isDark) 0.15f else 0.35f),
+                            1.0f to if (isDark) Color(0xFFFFD4AF).copy(alpha = 0.60f) else Color(0xFFFFBE8F).copy(alpha = 0.80f)
                         ),
-                        shape = RoundedCornerShape(29.dp)
+                        shape = RoundedCornerShape(30.dp)
                     )
-                    .padding(horizontal = 7.dp, vertical = 6.dp),
+                    .padding(horizontal = 6.dp, vertical = 5.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                // Top edge specular sheen ribbon
+                // Top edge liquid specular sheen ribbon
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.2.dp)
-                        .padding(horizontal = 16.dp)
+                        .height(2.dp)
+                        .padding(horizontal = 20.dp)
                         .align(Alignment.TopCenter)
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
                                     Color.Transparent,
-                                    Color.White.copy(alpha = if (isDark) 0.70f else 0.95f),
+                                    Color.White.copy(alpha = if (isDark) 0.85f else 0.95f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                // Bottom glass curvature refraction glow
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(1.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color.White.copy(alpha = if (isDark) 0.25f else 0.45f),
                                     Color.Transparent
                                 )
                             )
@@ -534,9 +552,9 @@ fun LifeBridgeBottomBar(
                     // --- Left Squircle Preview Thumbnail Card ---
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .shadow(4.dp, RoundedCornerShape(11.dp), spotColor = Color(0x30000000))
-                            .clip(RoundedCornerShape(11.dp))
+                            .size(40.dp)
+                            .shadow(6.dp, RoundedCornerShape(12.dp), spotColor = Color(0x35000000))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
                                 brush = when {
                                     isUnderstand -> Brush.linearGradient(listOf(Color(0xFF0EA5E9), Color(0xFF1E293B)))
@@ -545,7 +563,13 @@ fun LifeBridgeBottomBar(
                                     else -> Brush.linearGradient(listOf(Color(0xFF475569), Color(0xFF0F172A)))
                                 }
                             )
-                            .border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(11.dp))
+                            .border(
+                                width = 1.2.dp,
+                                brush = Brush.verticalGradient(
+                                    listOf(Color.White.copy(alpha = 0.95f), Color.White.copy(alpha = 0.40f))
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
                             .clickable {
                                 when {
                                     isUnderstand -> onNavigate("universal_input")
@@ -569,9 +593,9 @@ fun LifeBridgeBottomBar(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(2.dp))
 
-                    // --- Center Interactive Tabs (Understand, Safety, Library) with Italic Active Label ---
+                    // --- Center Interactive Tabs (Understand, Safety, Library) with Liquid Glass Pill ---
                     Row(
                         modifier = Modifier
                             .weight(1f)
@@ -612,15 +636,25 @@ fun LifeBridgeBottomBar(
                                                 .background(
                                                     brush = Brush.verticalGradient(
                                                         listOf(
-                                                            Color.White.copy(alpha = if (isDark) 0.35f else 0.55f),
-                                                            Color.White.copy(alpha = if (isDark) 0.15f else 0.30f)
+                                                            Color.White.copy(alpha = if (isDark) 0.45f else 0.70f),
+                                                            Color.White.copy(alpha = if (isDark) 0.20f else 0.40f)
                                                         )
                                                     )
                                                 )
                                                 .border(
-                                                    width = 1.dp,
-                                                    color = Color.White.copy(alpha = 0.65f),
+                                                    width = 1.2.dp,
+                                                    brush = Brush.verticalGradient(
+                                                        listOf(
+                                                            Color.White.copy(alpha = 0.95f),
+                                                            Color.White.copy(alpha = 0.35f)
+                                                        )
+                                                    ),
                                                     shape = RoundedCornerShape(16.dp)
+                                                )
+                                                .shadow(
+                                                    elevation = 4.dp,
+                                                    shape = RoundedCornerShape(16.dp),
+                                                    spotColor = if (isDark) Color(0x608CE8FF) else Color(0x25000000)
                                                 )
                                         } else Modifier
                                     )
@@ -632,13 +666,13 @@ fun LifeBridgeBottomBar(
                                         }
                                         onNavigate(target)
                                     }
-                                    .padding(horizontal = if (isSelected) 7.dp else 4.dp, vertical = 4.dp)
+                                    .padding(horizontal = if (isSelected) 8.dp else 4.dp, vertical = 6.dp)
                                     .testTag("nav_item_${route}"),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Icon(
                                         imageVector = icon,
@@ -648,7 +682,7 @@ fun LifeBridgeBottomBar(
                                         } else {
                                             if (isDark) Color(0xFFB5BAC7) else Color(0xFF4A4E5A)
                                         },
-                                        modifier = Modifier.size(if (isSelected) 17.dp else 16.dp)
+                                        modifier = Modifier.size(if (isSelected) 18.dp else 16.dp)
                                     )
 
                                     if (isSelected) {
@@ -658,7 +692,7 @@ fun LifeBridgeBottomBar(
                                                 fontFamily = FontFamily.Serif,
                                                 fontStyle = FontStyle.Italic,
                                                 fontWeight = FontWeight.SemiBold,
-                                                fontSize = 11.sp,
+                                                fontSize = 11.5.sp,
                                                 letterSpacing = 0.2.sp
                                             ),
                                             color = if (isDark) Color.White else Color(0xFF101217),
@@ -671,15 +705,22 @@ fun LifeBridgeBottomBar(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
 
                     // --- Right Black Play Action Button ▶ ---
                     Box(
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(30.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isDark) Color(0xCC000000) else Color(0xE60A0A0A)
+                                if (isDark) Color(0xEE000000) else Color(0xF20A0A0A)
+                            )
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.verticalGradient(
+                                    listOf(Color.White.copy(alpha = 0.40f), Color.Transparent)
+                                ),
+                                shape = CircleShape
                             )
                             .clickable {
                                 // Quick action: launches voice assistant or universal input
@@ -688,7 +729,7 @@ fun LifeBridgeBottomBar(
                             .testTag("bottom_bar_play_action"),
                         contentAlignment = Alignment.Center
                     ) {
-                        Canvas(modifier = Modifier.size(9.dp, 11.dp)) {
+                        Canvas(modifier = Modifier.size(10.dp, 12.dp)) {
                             val path = Path().apply {
                                 moveTo(0f, 0f)
                                 lineTo(size.width, size.height / 2f)

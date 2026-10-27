@@ -48,6 +48,25 @@ import kotlin.math.sin
  * Curated high-quality aesthetic color palette cycling one-by-one,
  * starting with the exact warm olive-gold from the reference video.
  */
+/**
+ * Curated high-definition aesthetic color palette cycling one-by-one,
+ * starting with the exact periwinkle and frames from the reference video.
+ */
+val AestheticVideoPalette = listOf(
+    Color(0xFF748FFC), // 1. Video Frame 0: Sky Periwinkle Blue
+    Color(0xFFFF6B6B), // 2. Video Coral Sunset
+    Color(0xFF20C997), // 3. Botanical Mint Emerald
+    Color(0xFFFCC419), // 4. Golden Honey Amber
+    Color(0xFFF06595), // 5. Mulberry Blossom Rose
+    Color(0xFF845EF7), // 6. Royal Lavender Violet
+    Color(0xFF22B8CF), // 7. Electric Arctic Cyan
+    Color(0xFFFD7E14)  // 8. Warm Saffron Tangerine
+)
+
+/**
+ * Curated high-quality aesthetic color palette cycling one-by-one,
+ * starting with the exact warm olive-gold from the reference video.
+ */
 val OrganicAestheticColors = listOf(
     Color(0xFF5D5A1B), // 1. Video Olive Gold (exact frame color)
     Color(0xFFC45A38), // 2. Terracotta Coral
@@ -65,6 +84,178 @@ val OrganicAestheticColors = listOf(
 private fun smoothStep(t: Float): Float {
     val clamped = t.coerceIn(0f, 1f)
     return clamped * clamped * (3f - 2f * clamped)
+}
+
+/**
+ * Standalone Sinusoidal Wavy Open-Stroke Loader from the exact video attachment:
+ * - Radial harmonic sine wave stroke along circumference: r(theta) = R + A * sin(12 * theta)
+ * - Open arc stroke with StrokeCap.Round (not a filled blob)
+ * - Indeterminate expansion/contraction (short squiggly worm -> full undulating loop -> contracts)
+ * - 100% transparent background
+ * - Smooth one-by-one cycling across high-aesthetic color palette
+ */
+@Composable
+fun WavyCircularStrokeLoader(
+    modifier: Modifier = Modifier,
+    sizeDp: Dp = 64.dp,
+    strokeWidthDp: Dp = 3.8.dp,
+    waveCount: Int = 12,
+    waveAmplitudeFraction: Float = 0.12f,
+    isAnimating: Boolean = true,
+    manualProgress: Float? = null
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "wavy_stroke_loader")
+
+    // Continuous smooth rotation (2400ms per full cycle)
+    val rotationAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2400, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "wavy_rotation"
+    )
+
+    // Indeterminate arc sweep expansion and contraction
+    val arcPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "wavy_arc_phase"
+    )
+
+    // Secondary subtle wave phase undulation to make waves breathe organically
+    val wavePhaseAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2f * PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "wavy_undulation"
+    )
+
+    // Color cycle progress across the aesthetic palette
+    val colorCycleProgress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = AestheticVideoPalette.size.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1800 * AestheticVideoPalette.size,
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "wavy_color_cycle"
+    )
+
+    // Compute current color
+    val currentColor = remember(colorCycleProgress, manualProgress) {
+        if (manualProgress != null) {
+            val idx = (manualProgress * (AestheticVideoPalette.size - 1)).toInt() % AestheticVideoPalette.size
+            val nextIdx = (idx + 1) % AestheticVideoPalette.size
+            val f = (manualProgress * (AestheticVideoPalette.size - 1)) - idx
+            lerp(AestheticVideoPalette[idx], AestheticVideoPalette[nextIdx], f.coerceIn(0f, 1f))
+        } else {
+            val colorIdx = colorCycleProgress.toInt() % AestheticVideoPalette.size
+            val nextColorIdx = (colorIdx + 1) % AestheticVideoPalette.size
+            val colorFraction = smoothStep(colorCycleProgress - colorCycleProgress.toInt())
+            lerp(AestheticVideoPalette[colorIdx], AestheticVideoPalette[nextColorIdx], colorFraction)
+        }
+    }
+
+    // Determine arc sweep range
+    val (startRad, endRad) = remember(arcPhase, manualProgress, rotationAngle) {
+        if (manualProgress != null) {
+            val sweep = (manualProgress.coerceIn(0.08f, 1.0f)) * (2f * PI.toFloat())
+            Pair(0f, sweep)
+        } else if (isAnimating) {
+            // Expansion (0 -> 0.5) and contraction (0.5 -> 1.0)
+            val headProgress = if (arcPhase < 0.5f) {
+                smoothStep(arcPhase * 2f)
+            } else 1.0f
+
+            val tailProgress = if (arcPhase >= 0.5f) {
+                smoothStep((arcPhase - 0.5f) * 2f)
+            } else 0f
+
+            val minSweep = (25f / 360f) * (2f * PI.toFloat())
+            val maxSweep = (310f / 360f) * (2f * PI.toFloat())
+
+            val start = tailProgress * maxSweep
+            val end = (minSweep + headProgress * (maxSweep - minSweep)).coerceAtLeast(start + minSweep)
+            Pair(start, end)
+        } else {
+            Pair(0f, (280f / 360f) * (2f * PI.toFloat()))
+        }
+    }
+
+    val currentRotation = if (isAnimating) rotationAngle else (manualProgress ?: 0f) * 180f
+
+    Box(
+        modifier = modifier
+            .size(sizeDp)
+            .background(Color.Transparent)
+            .rotate(currentRotation),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Transparent)
+        ) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val baseRadius = (size.minDimension / 2f) * 0.74f
+            val waveAmplitude = baseRadius * waveAmplitudeFraction
+            val strokeWidthPx = strokeWidthDp.toPx()
+
+            val sweepAngleTotal = (endRad - startRad)
+            val sampleCount = (sweepAngleTotal * 40f).toInt().coerceIn(30, 240)
+            val angleStep = sweepAngleTotal / sampleCount
+
+            val path = Path()
+
+            for (i in 0..sampleCount) {
+                val currentTheta = startRad + (i * angleStep)
+                // Modulate radius by sinusoidal harmonic
+                val radius = baseRadius + waveAmplitude * sin((waveCount * currentTheta) + (if (isAnimating) wavePhaseAngle else 0f))
+                val px = center.x + radius * cos(currentTheta)
+                val py = center.y + radius * sin(currentTheta)
+
+                if (i == 0) {
+                    path.moveTo(px, py)
+                } else {
+                    path.lineTo(px, py)
+                }
+            }
+
+            // Draw glowing halo stroke under layer
+            drawPath(
+                path = path,
+                color = currentColor.copy(alpha = 0.28f),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = strokeWidthPx * 1.9f,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                )
+            )
+
+            // Draw crisp primary wavy stroke
+            drawPath(
+                path = path,
+                color = currentColor,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = strokeWidthPx,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                )
+            )
+        }
+    }
 }
 
 /**
@@ -145,10 +336,10 @@ fun MorphingOrganicBlob(
     // Color cycle progress across the palette
     val colorProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = OrganicAestheticColors.size.toFloat(),
+        targetValue = AestheticVideoPalette.size.toFloat(),
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 3600 * OrganicAestheticColors.size / 3,
+                durationMillis = 2000 * AestheticVideoPalette.size,
                 easing = LinearEasing
             ),
             repeatMode = RepeatMode.Restart
@@ -163,15 +354,15 @@ fun MorphingOrganicBlob(
     // Calculate current interpolated color
     val currentColor = remember(colorProgress, manualProgress) {
         if (manualProgress != null) {
-            val idx = (manualProgress * 2f).toInt() % OrganicAestheticColors.size
-            val nextIdx = (idx + 1) % OrganicAestheticColors.size
+            val idx = (manualProgress * 2f).toInt() % AestheticVideoPalette.size
+            val nextIdx = (idx + 1) % AestheticVideoPalette.size
             val f = smoothStep((manualProgress * 2f) - (manualProgress * 2f).toInt())
-            lerp(OrganicAestheticColors[idx], OrganicAestheticColors[nextIdx], f)
+            lerp(AestheticVideoPalette[idx], AestheticVideoPalette[nextIdx], f)
         } else {
-            val colorIdx = colorProgress.toInt() % OrganicAestheticColors.size
-            val nextColorIdx = (colorIdx + 1) % OrganicAestheticColors.size
+            val colorIdx = colorProgress.toInt() % AestheticVideoPalette.size
+            val nextColorIdx = (colorIdx + 1) % AestheticVideoPalette.size
             val colorFraction = smoothStep(colorProgress - colorProgress.toInt())
-            lerp(OrganicAestheticColors[colorIdx], OrganicAestheticColors[nextColorIdx], colorFraction)
+            lerp(AestheticVideoPalette[colorIdx], AestheticVideoPalette[nextColorIdx], colorFraction)
         }
     }
 
@@ -211,7 +402,7 @@ fun MorphingOrganicBlob(
                 color = currentColor.copy(alpha = 0.88f)
             )
 
-            // Outer specular glow stroke (as in reference video 2)
+            // Outer specular glow stroke
             drawPath(
                 path = path,
                 color = currentColor,
@@ -230,8 +421,8 @@ fun MorphingOrganicBlob(
  * Faithfully renders the video animation:
  * - Positioned in the exact center/middle of the screen
  * - 100% transparent background (no box, no container card, no opaque backdrop)
- * - Multi-harmonic organic shape morphing (14-scallop seal -> rounded pentagon -> 8-pointed star)
- * - Aesthetic colors cycling one-by-one smoothly
+ * - Sinusoidal wavy arc stroke rotating and undulating along the circle
+ * - Aesthetic colors cycling one-by-one smoothly (Sky Periwinkle -> Coral -> Mint -> Honey -> Mulberry -> Lavender -> Cyan)
  * - High-definition Swiss editorial typography
  */
 @Composable
@@ -251,23 +442,26 @@ fun MiddleScreenTransparentLoader(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier
+                .background(Color.Transparent)
+                .padding(24.dp)
         ) {
-            // Morphing organic animation with transparent background
-            MorphingOrganicBlob(
+            // Video-Accurate Wavy Circular Stroke Loader with 100% Transparent Background
+            WavyCircularStrokeLoader(
                 isAnimating = isAnimating,
-                sizeDp = sizeDp
+                sizeDp = sizeDp,
+                strokeWidthDp = 4.2.dp
             )
 
             if (!statusMessage.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
                     text = statusMessage,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
-                    letterSpacing = 0.2.sp
+                    letterSpacing = 0.3.sp
                 )
             }
 
@@ -489,11 +683,11 @@ fun LiquidGlassPullToRefreshContainer(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Floating Liquid Glass Badge with animated morphing organic blob
-                    MorphingOrganicBlob(
+                    // Floating Wavy Arc Stroke preview matching the video
+                    WavyCircularStrokeLoader(
                         isAnimating = false,
-                        manualProgress = pullProgress * 1.5f,
-                        sizeDp = 38.dp
+                        manualProgress = pullProgress,
+                        sizeDp = 44.dp
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))

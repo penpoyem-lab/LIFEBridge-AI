@@ -158,8 +158,28 @@ class ChatbotRepository(private val context: Context) {
     private fun generateExpertLocalResponse(query: String, vaultContext: String): ChatMessage {
         val q = query.lowercase(Locale.ROOT).trim()
 
+        // 1. DYNAMIC VAULT GROUNDING: Check if user is asking about their specific saved documents or action cards
+        if (vaultContext.isNotBlank() && (q.contains("my doc") || q.contains("my bill") || q.contains("what doc") || q.contains("my vault") || q.contains("my rebate") || q.contains("my deadline") || q.contains("electricity") || q.contains("rebate") || q.contains("grant") || q.contains("action"))) {
+            return ChatMessage(
+                text = """
+                📌 **Executive Vault Grounding Intelligence**
+                Cross-referencing your encrypted on-device Document Vault and active action cards:
+                
+                $vaultContext
+                
+                ⚡ **Recommended Safe Next Steps:**
+                1. Review the deadlines flagged above to prevent late fees or lost rebates.
+                2. If any document requires verification, launch the Universal Scanner to extract missing clauses.
+                3. Snooze or acknowledge pending action cards directly in the Action Cards screen.
+                """.trimIndent(),
+                sender = MessageSender.ASSISTANT,
+                actionLabel = "View Active Action Cards",
+                actionRoute = "action_cards"
+            )
+        }
+
         val (text, actionLabel, actionRoute) = when {
-            q.contains("scam") || q.contains("fake") || q.contains("lottery") || q.contains("otp") || q.contains("bank account blocked") || q.contains("urgent money") || q.contains("phishing") -> {
+            q.contains("scam") || q.contains("fake") || q.contains("lottery") || q.contains("otp") || q.contains("bank account blocked") || q.contains("urgent money") || q.contains("phishing") || q.contains("suspicious link") -> {
                 Triple(
                     """
                     📌 **Executive Security Finding**
@@ -173,22 +193,22 @@ class ChatbotRepository(private val context: Context) {
                     ⚡ **Immediate Safe Action Plan:**
                     1. **Cease Communication**: Do not click any links, download attachments, or call numbers provided in the suspicious message.
                     2. **Run Threat Audit**: Paste the exact text or URL into the **LIFEBridge Scam Checker** to audit risk signatures.
-                    3. **Report to Regulatory Portal**: Forward phishing SMS to official telecom/cyber fraud portals (e.g. 1930 / cybercrime.gov.in).
+                    3. **Golden Hour Defense**: If money was fraudulently transferred within the last 2 hours, immediately dial **1930** (National Cyber Crime Reporting Portal) to request a temporary interbank ledger hold.
                     """.trimIndent(),
                     "Audit in Scam Checker",
                     "safety_checker"
                 )
             }
 
-            q.contains("bill") || q.contains("electricity") || q.contains("kwh") || q.contains("hospital") || q.contains("medical bill") || q.contains("rebate") -> {
+            q.contains("bill") || q.contains("electricity") || q.contains("kwh") || q.contains("hospital") || q.contains("medical bill") || q.contains("rebate") || q.contains("tariff") -> {
                 Triple(
                     """
                     📌 **Executive Bill & Subsidies Analysis**
                     Utility bills and medical invoices contain multiple line items that frequently qualify for consumer rebates, prompt-pay discounts, or government subsidies.
                     
                     📅 **Key Deadlines & Grace Periods:**
-                    • **Due Date**: Check the 'Pay Before' cutoff to prevent disconnection and late surcharges (typically 1.5%–2% monthly interest).
-                    • **Rebate Window**: Many state electricity boards offer a 5%–10% green rebate or direct prompt-payment deduction if cleared within 7 days of invoice issue.
+                    • **Due Date Cutoff**: Verify the 'Net Payable Date' to prevent disconnection and recurring surcharge penalties (typically 1.5%–2% monthly interest).
+                    • **Prompt-Pay Rebate Window**: Many state electricity boards offer a 5%–10% green rebate or prompt-payment deduction if cleared within the rebate window.
                     
                     💰 **Financial Breakdown Checklist:**
                     • **Base Tariff vs Surcharges**: Distinguish between actual energy consumption (kWh) and regulatory surcharges, fuel adjustment charges (FAC), and municipal duties.
@@ -226,6 +246,66 @@ class ChatbotRepository(private val context: Context) {
                     """.trimIndent(),
                     "Analyze Scholarship Doc",
                     "universal_input"
+                )
+            }
+
+            q.contains("tax") || q.contains("itr") || q.contains("income tax") || q.contains("scrutiny") || q.contains("tds") || q.contains("notice") -> {
+                Triple(
+                    """
+                    📌 **Executive Tax Notice & Compliance Directive**
+                    Official tax communications require systematic verification against the official e-Filing portal before responding.
+                    
+                    📑 **Statutory Verification Checklist:**
+                    • **DIN Verification**: Every valid income tax notice contains a 10-digit Computer Generated Document Identification Number (DIN). Notices without a DIN on the official portal are void.
+                    • **AIS/TIS Reconciliation**: Cross-check high-value transactions reported under Annual Information Statement (AIS) with your bank statements.
+                    • **Section Clarification**: Determine whether the notice is under Sec 143(1) (Summary Adjustment), Sec 139(9) (Defective Return), or Sec 148 (Income Escaping Assessment).
+                    
+                    ⚡ **Immediate Safe Action Plan:**
+                    1. Log into the official e-Filing portal directly (never click email links).
+                    2. Submit e-Proceedings response with supporting bank debit vouchers before the statutory 30-day cutoff.
+                    """.trimIndent(),
+                    "Scan Notice in Scanner",
+                    "scanner"
+                )
+            }
+
+            q.contains("rent") || q.contains("lease") || q.contains("landlord") || q.contains("tenant") || q.contains("security deposit") || q.contains("eviction") -> {
+                Triple(
+                    """
+                    📌 **Executive Tenancy & Lease Agreement Analysis**
+                    Residential tenancy rights are governed by Model Tenancy Act provisions and stamped contractual terms.
+                    
+                    ⚖️ **Key Legal Checkpoints:**
+                    • **Notice Period & Lock-in Clause**: Standard agreements require 30 to 60 days written notice before termination.
+                    • **Security Deposit Deduction Rules**: Landlords can only deduct documented, non-wear-and-tear damages with supporting repair receipts.
+                    • **Stamp Duty & Registration**: Agreements exceeding 11 months legally require formal registration with the Sub-Registrar to be enforceable.
+                    
+                    ⚡ **Immediate Safe Action Plan:**
+                    1. Scan your lease agreement into Universal Input to extract deduction clauses.
+                    2. Maintain written photo documentation of property condition at move-in and move-out.
+                    """.trimIndent(),
+                    "Analyze Lease in Universal Input",
+                    "universal_input"
+                )
+            }
+
+            q.contains("insurance") || q.contains("claim") || q.contains("tpa") || q.contains("cashless") || q.contains("mediclaim") || q.contains("hospitalization") -> {
+                Triple(
+                    """
+                    📌 **Executive Health Insurance Claim Adjudication**
+                    Maximizing cashless claim approval requires proactive documentation prior to hospital discharge.
+                    
+                    🏥 **Critical Claim Protocol:**
+                    • **24-Hour Intimation**: Emergency hospitalizations must be intimated to your Third Party Administrator (TPA) within 24 hours of admission.
+                    • **Non-Medical Deduction Audit**: Scrutinize proportionate room rent deductions and consumable deductibles against IRDAI master circular standards.
+                    • **Pre/Post-Hospitalization Window**: Retain all diagnostic bills incurred 30 days prior to admission and 60 days post-discharge.
+                    
+                    ⚡ **Immediate Safe Action Plan:**
+                    1. Collect discharge summary, indoor case papers, and detailed pharmacy bills.
+                    2. File formal grievance through IRDAI Bima Bharosa portal if cashless approval is unlawfully delayed.
+                    """.trimIndent(),
+                    "Scan Insurance Policy",
+                    "scanner"
                 )
             }
 

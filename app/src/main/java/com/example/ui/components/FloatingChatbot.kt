@@ -643,10 +643,11 @@ fun LiquidGlassChatbotSheet(
                                     .background(if (isDark) Color(0x33FFFFFF) else Color(0x15000000))
                                     .padding(horizontal = 14.dp, vertical = 10.dp)
                             ) {
-                                MorphingOrganicBlob(
+                                WavyCircularStrokeLoader(
                                     modifier = Modifier.background(Color.Transparent),
                                     isAnimating = true,
-                                    sizeDp = 22.dp
+                                    sizeDp = 24.dp,
+                                    strokeWidthDp = 2.8.dp
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(

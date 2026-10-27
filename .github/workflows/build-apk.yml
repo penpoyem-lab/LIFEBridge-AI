@@ -1,0 +1,90 @@
+name: Build Android APK
+run-name: Build Android APK (${{ github.ref_name }})
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - all
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build & Package APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Setup Gradle Build Tool
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+          cache-read-only: false
+
+      - name: Prepare Android Secrets & Keystore
+        run: |
+          # 1. Environment Secrets
+          if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+            cp .env.example .env
+          elif [ ! -f ".env" ]; then
+            touch .env
+          fi
+
+          # 2. Debug Keystore Decoding & Generation
+          if [ -f "debug.keystore.base64" ]; then
+            base64 -d debug.keystore.base64 > debug.keystore
+          fi
+          if [ ! -f "debug.keystore" ]; then
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Debug APK
+        run: gradle assembleDebug --stacktrace
+
+      - name: Verify Generated APK
+        id: verify-apk
+        run: |
+          APK_FILE="app/build/outputs/apk/debug/app-debug.apk"
+          if [ -f "$APK_FILE" ]; then
+            APK_SIZE=$(stat -c%s "$APK_FILE")
+            echo "apk_exists=true" >> $GITHUB_OUTPUT
+            echo "apk_path=$APK_FILE" >> $GITHUB_OUTPUT
+            echo "apk_size=$APK_SIZE bytes"
+            echo "### 📱 Android APK Build Complete! :rocket:" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+            echo "- **Artifact**: \`app-debug.apk\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Size**: $((APK_SIZE / 1024 / 1024)) MB ($APK_SIZE bytes)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target SDK**: 36 | **Min SDK**: 24" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "APK file not found at expected path: $APK_FILE"
+            exit 1
+          fi
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LIFEBridge-AI-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30

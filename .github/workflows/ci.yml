@@ -5,6 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   android-build:
@@ -21,11 +22,22 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+          cache-read-only: false
 
-      - name: Restore Debug Keystore
+      - name: Configure Environment & Keystore
         run: |
+          if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+            cp .env.example .env
+          elif [ ! -f ".env" ]; then
+            touch .env
+          fi
           if [ -f "debug.keystore.base64" ]; then
             base64 -d debug.keystore.base64 > debug.keystore
+          fi
+          if [ ! -f "debug.keystore" ]; then
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
 
       - name: Run Android Unit Tests
@@ -38,8 +50,9 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: app-debug-apk
+          name: lifebridge-ai-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
 
   backend-tests:
     name: FastAPI Backend Tests
