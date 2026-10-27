@@ -30,17 +30,16 @@ jobs:
       - name: Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17 (Temurin)
+      - name: Set up JDK 21 (Temurin)
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
-          cache: 'gradle'
 
       - name: Setup Gradle Build Tool
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.12'
+          gradle-version: '9.3.1'
           cache-read-only: false
 
       - name: Prepare Android Secrets & Keystore
