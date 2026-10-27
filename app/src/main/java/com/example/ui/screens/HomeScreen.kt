@@ -49,6 +49,7 @@ fun HomeScreen(
     val contextSuggestion by viewModel.currentScreenContextSuggestion.collectAsState()
 
     val visibleRecall = activeRecalls.firstOrNull { it.id !in dismissedRecallIds }
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     var selectedMoodIndex by remember { mutableStateOf(1) }
 
@@ -61,65 +62,118 @@ fun HomeScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
+        LiquidGlassPullToRefreshContainer(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refreshAllData() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .testTag("home_screen_column"),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(22.dp)
         ) {
-            // Editorial Top Bar: Geometric Brand Glyph & Circular Action
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Geometric four-diamond brand glyph
-                    Box(
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("home_screen_column"),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(22.dp)
+            ) {
+                // Editorial Top Bar: Geometric Brand Glyph, Executive Sync Indicator & Circular Action
+                item {
+                    Row(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .clickable { onNavigate("profile") },
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        // Geometric four-diamond brand glyph / Box button opening Liquid Glass App Menu
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color.White.copy(alpha = 0.85f),
+                                            Color.White.copy(alpha = 0.35f)
+                                        )
+                                    )
+                                )
+                                .border(1.2.dp, Umbra.copy(alpha = 0.15f), CircleShape)
+                                .clickable { viewModel.toggleAppMenu(true) }
+                                .testTag("app_menu_button"),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
-                                Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
-                            }
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
-                                Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
+                                    Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
+                                }
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
+                                    Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Umbra))
+                                }
                             }
                         }
-                    }
 
-                    // Circular outline button
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .border(1.2.dp, Umbra.copy(alpha = 0.2f), CircleShape)
-                            .clickable { onNavigate("search") },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = "Search",
-                            tint = Umbra,
-                            modifier = Modifier.size(19.dp)
-                        )
+                        // Executive Live Sync & Cryptographic Status Badge (Tap to Refresh)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            Color.White.copy(alpha = 0.88f),
+                                            Color.White.copy(alpha = 0.60f)
+                                        )
+                                    )
+                                )
+                                .border(1.dp, Umbra.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                                .clickable { viewModel.refreshAllData() }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .testTag("executive_sync_button"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                MorphingOrganicBlob(
+                                    isAnimating = isRefreshing,
+                                    sizeDp = 18.dp
+                                )
+                                Text(
+                                    text = if (isRefreshing) "SYNCING VAULT..." else "VAULT ONLINE",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Umbra.copy(alpha = 0.85f),
+                                    letterSpacing = 0.5.sp
+                                )
+                            }
+                        }
+
+                        // Circular outline button
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .border(1.2.dp, Umbra.copy(alpha = 0.2f), CircleShape)
+                                .clickable { onNavigate("search") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "Search",
+                                tint = Umbra,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
                     }
                 }
-            }
 
             // Daily Reflection / Greeting Card Section (Matching Screenshot)
             item {
@@ -955,4 +1009,5 @@ fun HomeScreen(
             }
         }
     }
+}
 }

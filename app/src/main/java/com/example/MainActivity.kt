@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.FloatingChatbotOverlay
+import com.example.ui.components.LiquidGlassAppMenu
 import com.example.ui.screens.*
 import com.example.ui.theme.LIFEBridgeTheme
 import com.example.viewmodel.LifeBridgeViewModel
@@ -212,6 +213,12 @@ fun LifeBridgeApp(viewModel: LifeBridgeViewModel) {
                     onNavigate = { viewModel.navigateTo(it) }
                 )
             }
+
+            // Global Liquid Glass App Menu Drawer (accessible via top-left box button)
+            LiquidGlassAppMenu(
+                viewModel = viewModel,
+                onNavigate = { viewModel.navigateTo(it) }
+            )
 
             // Global Floating Liquid Glass Chatbot Assistant
             if (currentScreen !in listOf("splash", "onboarding_1", "onboarding", "language_selection", "permissions")) {

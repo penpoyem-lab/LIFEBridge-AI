@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.model.ComplianceReport
 import com.example.ui.components.GlassCard
 import com.example.ui.components.LifeBridgeBottomBar
 import com.example.ui.theme.*
@@ -444,7 +445,8 @@ fun ComplianceReportScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (report == null) {
+            val currentReport = report
+            if (currentReport == null) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -452,8 +454,6 @@ fun ComplianceReportScreen(
                     Text("No report active. Select a document in Library to generate.")
                 }
             } else {
-                val rep = report!!
-
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
@@ -484,7 +484,7 @@ fun ComplianceReportScreen(
                                             color = Color(0xFFD4AF37)
                                         )
                                         Text(
-                                            text = rep.reportId,
+                                            text = currentReport.reportId,
                                             style = MaterialTheme.typography.labelSmall.copy(
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 11.sp
@@ -516,7 +516,7 @@ fun ComplianceReportScreen(
                                 )
 
                                 Text(
-                                    text = rep.documentTitle,
+                                    text = currentReport.documentTitle,
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontFamily = FontFamily.Serif,
                                         fontWeight = FontWeight.Bold
@@ -525,7 +525,7 @@ fun ComplianceReportScreen(
                                 )
 
                                 Text(
-                                    text = "Category: ${rep.documentCategory} • Date: ${rep.timestampFormatted}",
+                                    text = "Category: ${currentReport.documentCategory} • Date: ${currentReport.timestampFormatted}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -539,20 +539,20 @@ fun ComplianceReportScreen(
                                 )
 
                                 Text(
-                                    text = rep.fullSummary,
+                                    text = currentReport.fullSummary,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onBackground,
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
 
-                                if (rep.actionItems.isNotEmpty()) {
+                                if (currentReport.actionItems.isNotEmpty()) {
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Text(
                                         text = "Itemized Action Obligations",
                                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                         color = MaterialTheme.colorScheme.primary
                                     )
-                                    rep.actionItems.forEachIndexed { i, act ->
+                                    currentReport.actionItems.forEachIndexed { i, act ->
                                         Row(
                                             modifier = Modifier.padding(top = 4.dp),
                                             verticalAlignment = Alignment.Top
@@ -580,7 +580,7 @@ fun ComplianceReportScreen(
                                             color = Color(0xFF8CE8FF)
                                         )
                                         Text(
-                                            text = rep.digitalFingerprintSha256,
+                                            text = currentReport.digitalFingerprintSha256,
                                             style = MaterialTheme.typography.labelSmall.copy(
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 9.sp
@@ -600,10 +600,10 @@ fun ComplianceReportScreen(
                     onClick = {
                         val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(android.content.Intent.EXTRA_SUBJECT, "Compliance Report: ${rep.documentTitle}")
+                            putExtra(android.content.Intent.EXTRA_SUBJECT, "Compliance Report: ${currentReport.documentTitle}")
                             putExtra(
                                 android.content.Intent.EXTRA_TEXT,
-                                "LIFEBRIDGE COMPLIANCE CERTIFICATE\n\nReport: ${rep.reportId}\nTitle: ${rep.documentTitle}\nCategory: ${rep.documentCategory}\nFingerprint: ${rep.digitalFingerprintSha256}\n\nSummary:\n${rep.fullSummary}\n\nOfficial Verification: ${rep.verificationSeal}"
+                                "LIFEBRIDGE COMPLIANCE CERTIFICATE\n\nReport: ${currentReport.reportId}\nTitle: ${currentReport.documentTitle}\nCategory: ${currentReport.documentCategory}\nFingerprint: ${currentReport.digitalFingerprintSha256}\n\nSummary:\n${currentReport.fullSummary}\n\nOfficial Verification: ${currentReport.verificationSeal}"
                             )
                         }
                         context.startActivity(android.content.Intent.createChooser(shareIntent, "Export Formal Compliance Report"))

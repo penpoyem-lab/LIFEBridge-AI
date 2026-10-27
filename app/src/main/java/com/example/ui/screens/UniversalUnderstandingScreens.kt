@@ -555,30 +555,31 @@ fun ProcessingProgressScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Circular progress indicator with percentage
+            // Centered morphing organic animation with transparent background
             Box(
-                modifier = Modifier.size(160.dp),
+                modifier = Modifier
+                    .size(160.dp)
+                    .background(Color.Transparent),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxSize(),
-                    color = ElectricCyan,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    strokeWidth = 10.dp
+                com.example.ui.components.MorphingOrganicBlob(
+                    isAnimating = true,
+                    sizeDp = 110.dp
                 )
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Subtle transparent pill showing percentage
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f))
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
                         text = "${(progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Processing...",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

@@ -87,4 +87,19 @@ class ExampleRobolectricTest {
         repo.markRecallDone("test_rec_01")
         assertTrue(true)
     }
+
+    @Test
+    fun appMenuState_toggleAndNavigate() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val vm = com.example.viewmodel.LifeBridgeViewModel(app)
+
+        assertEquals(false, vm.isAppMenuOpen.value)
+        vm.toggleAppMenu(true)
+        assertEquals(true, vm.isAppMenuOpen.value)
+
+        // Navigating to any screen automatically closes the menu
+        vm.navigateTo("security_audit")
+        assertEquals(false, vm.isAppMenuOpen.value)
+        assertEquals("security_audit", vm.currentScreen.value)
+    }
 }

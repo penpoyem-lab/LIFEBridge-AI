@@ -8,6 +8,12 @@ import com.example.data.local.entities.EmergencyContactEntity
 import com.example.data.local.entities.SafetyCheckEntity
 import com.example.data.local.entities.AuditLogEntity
 import com.example.data.model.*
+import com.example.BuildConfig
+import com.example.data.network.GeminiContent
+import com.example.data.network.GeminiGenerationConfig
+import com.example.data.network.GeminiNetworkClient
+import com.example.data.network.GeminiPart
+import com.example.data.network.GeminiRequest
 import com.example.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +31,7 @@ class LifeBridgeRepository(
     private val database: LifeBridgeDatabase = LifeBridgeDatabase.getDatabase(context),
     val preferences: UserPreferencesRepository = UserPreferencesRepository(context)
 ) {
+    private val apiService = GeminiNetworkClient.apiService
     private val docDao = database.documentDao()
     private val cardDao = database.actionCardDao()
     private val safetyDao = database.safetyCheckDao()
@@ -102,14 +109,14 @@ class LifeBridgeRepository(
             val urgentCard = pendingCards.sortedByDescending { it.priority == "High" }.firstOrNull()
 
             val totalSafetyScore = if (checks.isNotEmpty()) {
-                val sumSafe = checks.sumOf { 100 - it.riskScore.coerceIn(0, 100) }
+                val sumSafe = checks.sumOf { 100 - it.score.coerceIn(0, 100) }
                 sumSafe / checks.size
             } else 95
 
             ExecutiveStats(
                 pendingDeadlinesCount = pendingCards.size,
                 urgentActionTitle = urgentCard?.title ?: "No Pending Deadlines",
-                urgentActionDate = urgentCard?.dueDateFormatted ?: "All tasks on schedule",
+                urgentActionDate = urgentCard?.dueDate ?: "All tasks on schedule",
                 safetyScoreAvg = totalSafetyScore,
                 totalVaultDocs = docs.size,
                 voiceMemosCount = recalls.size
@@ -128,9 +135,8 @@ class LifeBridgeRepository(
             title = if (transcript.length > 36) "${transcript.take(36)}..." else transcript,
             description = translatedText?.let { "$transcript\n\n[Translation]: $it" } ?: transcript,
             priority = "Medium",
-            dueDateFormatted = "Scheduled: $timeStr",
-            isCompleted = false,
-            category = "Voice Memo"
+            dueDate = "Scheduled: $timeStr",
+            isCompleted = false
         )
         cardDao.insertCards(listOf(card))
 
@@ -157,7 +163,7 @@ class LifeBridgeRepository(
         val reportId = "LBR-COMPLIANCE-${document.id.uppercase().take(8)}-${now.toString().takeLast(4)}"
 
         val dates = parseJsonStringList(document.datesJson)
-        val actions = parseJsonStringList(document.actionItemsJson)
+        val actions = parseJsonStringList(document.requirementsJson)
 
         val rawFingerprint = "${document.id}|${document.title}|${document.summary}|${document.createdAt}|$now"
         val hashBytes = MessageDigest.getInstance("SHA-256").digest(rawFingerprint.toByteArray(Charsets.UTF_8))
@@ -401,6 +407,87 @@ class LifeBridgeRepository(
         val indicators = mutableListOf<String>()
         val safeSteps = mutableListOf<String>()
 
+        // 1. High-Accuracy Gemini Cyber Defense Analysis (if API key available)
+        val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
+        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
+            try {
+                val prompt = """
+                    You are a world-class cybersecurity auditor and fraud defense expert.
+                    Analyze this suspicious $type for social engineering, phishing, smishing, fake lottery/benefit claims, or financial fraud:
+                    "$input"
+
+                    Provide a JSON response with this exact schema:
+                    {
+                      "score": <integer from 0 to 100 representing threat risk where >60 is High Risk>,
+                      "riskLevel": "<High Risk | Warning Signs | No Obvious Signs>",
+                      "indicators": ["<detailed specific threat indicator 1>", "<detailed specific threat indicator 2>"],
+                      "safeSteps": ["<actionable safe protective step 1>", "<actionable safe protective step 2>"],
+                      "explanation": "<concise executive finding summarizing why this is or isn't dangerous>"
+                    }
+                """.trimIndent()
+
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(role = "user", parts = listOf(GeminiPart(prompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.1f, maxOutputTokens = 600)
+                )
+
+                val response = try {
+                    apiService.generateContent(apiKey = apiKey, request = request)
+                } catch (e: Exception) {
+                    apiService.generateContentFallback(apiKey = apiKey, request = request)
+                }
+
+                if (response.isSuccessful) {
+                    val rawText = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text?.trim()
+                    if (!rawText.isNullOrBlank()) {
+                        val cleanJson = rawText.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+                        val jsonObj = JSONObject(cleanJson)
+                        val aiScore = jsonObj.optInt("score", 65).coerceIn(5, 99)
+                        val aiRiskLevel = jsonObj.optString("riskLevel", "High Risk")
+                        val aiExplanation = jsonObj.optString("explanation", "Potential security threat detected.")
+                        val aiIndicators = mutableListOf<String>()
+                        val indArr = jsonObj.optJSONArray("indicators")
+                        if (indArr != null) {
+                            for (i in 0 until indArr.length()) aiIndicators.add(indArr.getString(i))
+                        }
+                        val aiSafeSteps = mutableListOf<String>()
+                        val stepsArr = jsonObj.optJSONArray("safeSteps")
+                        if (stepsArr != null) {
+                            for (i in 0 until stepsArr.length()) aiSafeSteps.add(stepsArr.getString(i))
+                        }
+
+                        val aiAnalysis = ScamAnalysis(
+                            checkType = type,
+                            inputSnippet = if (input.length > 100) input.take(97) + "..." else input,
+                            riskLevel = aiRiskLevel,
+                            score = aiScore,
+                            indicators = if (aiIndicators.isNotEmpty()) aiIndicators else listOf("Suspicious digital pattern detected."),
+                            safeSteps = if (aiSafeSteps.isNotEmpty()) aiSafeSteps else listOf("Verify independently via official contact channels."),
+                            explanation = aiExplanation
+                        )
+
+                        safetyDao.insertCheck(
+                            SafetyCheckEntity(
+                                id = aiAnalysis.id,
+                                checkType = type,
+                                inputContent = aiAnalysis.inputSnippet,
+                                riskLevel = aiAnalysis.riskLevel,
+                                score = aiAnalysis.score,
+                                indicatorsJson = toJsonStringList(aiAnalysis.indicators),
+                                safeStepsJson = toJsonStringList(aiAnalysis.safeSteps),
+                                explanation = aiAnalysis.explanation,
+                                timestamp = System.currentTimeMillis()
+                            )
+                        )
+                        recordAuditLog("CYBER_DEFENSE_AUDIT", "Risk ${aiAnalysis.score}/100: ${aiAnalysis.riskLevel}", "WARNING")
+                        return@withContext aiAnalysis
+                    }
+                }
+            } catch (e: Exception) {
+                // Fall back gracefully to rule-based heuristics engine
+            }
+        }
+
         if (type == "Link" || input.startsWith("http://") || input.startsWith("https://") || input.contains(".ly/") || input.contains("tinyurl")) {
             // URL inspection
             if (lower.contains("bit.ly") || lower.contains("tinyurl") || lower.contains("cutt.ly") || lower.contains("is.gd")) {
@@ -499,9 +586,34 @@ class LifeBridgeRepository(
     /**
      * Multilingual Translation Engine
      */
-    suspend fun translateText(text: String, targetLang: String): String = withContext(Dispatchers.Default) {
+    suspend fun translateText(text: String, targetLang: String): String = withContext(Dispatchers.IO) {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return@withContext ""
+
+        // High-Accuracy Gemini Multilingual Translation
+        val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
+        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
+            try {
+                val prompt = "You are a professional human translator. Translate the following text into $targetLang with absolute natural fluency, correct grammar, and preserving context. Output ONLY the translated text without extra explanation or formatting:\n\n$trimmed"
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(role = "user", parts = listOf(GeminiPart(prompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.1f, maxOutputTokens = 600)
+                )
+                val response = try {
+                    apiService.generateContent(apiKey = apiKey, request = request)
+                } catch (e: Exception) {
+                    apiService.generateContentFallback(apiKey = apiKey, request = request)
+                }
+                if (response.isSuccessful) {
+                    val translated = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text?.trim()
+                    if (!translated.isNullOrBlank()) {
+                        return@withContext translated
+                    }
+                }
+            } catch (e: Exception) {
+                // fall through to local dictionary
+            }
+        }
 
         // Curated authentic translation dictionary & transliteration map for target languages
         when (targetLang) {

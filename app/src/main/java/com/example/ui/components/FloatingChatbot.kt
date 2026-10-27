@@ -359,6 +359,7 @@ fun LiquidGlassChatbotSheet(
 ) {
     val messages by viewModel.chatMessages.collectAsState()
     val isThinking by viewModel.isChatbotThinking.collectAsState()
+    val contextSuggestion by viewModel.currentScreenContextSuggestion.collectAsState()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -508,9 +509,80 @@ fun LiquidGlassChatbotSheet(
                     }
                 }
 
+                // Proactive Screen Context Intelligence Banner
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isDark) Color(0x338CE8FF) else Color(0x1F8CE8FF))
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFF8CE8FF).copy(alpha = 0.7f), Color(0xFFD69EFF).copy(alpha = 0.5f))
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Bolt,
+                                contentDescription = null,
+                                tint = Color(0xFF8CE8FF),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Screen Context Intelligence",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF8CE8FF)
+                                    )
+                                )
+                                Text(
+                                    text = contextSuggestion.prompt,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                onDismiss()
+                                onNavigate(contextSuggestion.targetRoute)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF8CE8FF),
+                                contentColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(30.dp)
+                        ) {
+                            Text(
+                                text = contextSuggestion.actionLabel,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier.padding(vertical = 6.dp)
                 )
 
                 // Quick Prompt Suggestion Chips
@@ -571,14 +643,14 @@ fun LiquidGlassChatbotSheet(
                                     .background(if (isDark) Color(0x33FFFFFF) else Color(0x15000000))
                                     .padding(horizontal = 14.dp, vertical = 10.dp)
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = Color(0xFF8CE8FF)
+                                MorphingOrganicBlob(
+                                    modifier = Modifier.background(Color.Transparent),
+                                    isAnimating = true,
+                                    sizeDp = 22.dp
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "Analyzing & consulting intelligence...",
+                                    text = "Analyzing with Gemini AI intelligence...",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -797,6 +869,386 @@ fun ChatBubbleItem(
                                 modifier = Modifier.size(17.dp)
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StudioVoiceWaveformHudDialog(
+    viewModel: LifeBridgeViewModel,
+    onDismiss: () -> Unit
+) {
+    var isListening by remember { mutableStateOf(true) }
+    var memoLogged by remember { mutableStateOf(false) }
+
+    // Waveform continuous harmonic phase animation
+    val infiniteTransition = rememberInfiniteTransition(label = "hud_waveform_anim")
+    val phase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(1600, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "phase_anim"
+    )
+    val pulseGlow by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_anim"
+    )
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.75f))
+                .padding(horizontal = 14.dp, vertical = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Obsidian Luxury Glass Container
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.92f)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color(0xF50E1017))
+                    .border(
+                        width = 1.5.dp,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color(0xFFE8D5B5).copy(alpha = 0.65f),
+                                Color(0xFF8CE8FF).copy(alpha = 0.35f),
+                                Color(0xFF1E2230)
+                            )
+                        ),
+                        shape = RoundedCornerShape(28.dp)
+                    )
+                    .padding(20.dp)
+            ) {
+                // Header: Swiss Editorial Title & Telemetry Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isListening) Color(0xFF00E676) else Color(0xFFFFB28E))
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isListening) "LIVE TELEMETRY STREAM" else "TELEMETRY PAUSED",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    letterSpacing = 1.2.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isListening) Color(0xFF00E676) else Color(0xFFFFB28E)
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Studio Voice Waveform HUD",
+                            fontFamily = FontFamily.Serif,
+                            fontStyle = FontStyle.Italic,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = Color(0xFFFDFBF7)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x33FFFFFF))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Close HUD",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // High-Tech Waveform Canvas Visualizer
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0xFF08090E))
+                        .border(1.dp, Color(0xFF8CE8FF).copy(alpha = 0.25f), RoundedCornerShape(20.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val width = size.width
+                        val height = size.height
+                        val midY = height / 2f
+                        val baseAmp = if (isListening) 26.dp.toPx() else 8.dp.toPx()
+
+                        // Wave 1: Primary Harmonic (Cyan)
+                        val path1 = Path()
+                        path1.moveTo(0f, midY)
+                        val pointsCount = 80
+                        for (i in 0..pointsCount) {
+                            val x = (width / pointsCount) * i
+                            val progress = x / width
+                            val envelope = kotlin.math.sin(progress * PI.toFloat()) // zero at edges
+                            val y = midY + kotlin.math.sin(progress * 4 * PI.toFloat() + phase) * baseAmp * envelope
+                            if (i == 0) path1.moveTo(x, y) else path1.lineTo(x, y)
+                        }
+                        drawPath(
+                            path = path1,
+                            color = Color(0xFF8CE8FF),
+                            style = Stroke(width = 3.dp.toPx())
+                        )
+
+                        // Wave 2: Secondary Harmonic (Champagne Gold)
+                        val path2 = Path()
+                        for (i in 0..pointsCount) {
+                            val x = (width / pointsCount) * i
+                            val progress = x / width
+                            val envelope = kotlin.math.sin(progress * PI.toFloat())
+                            val y = midY + kotlin.math.sin(progress * 6 * PI.toFloat() + phase * 1.4f) * (baseAmp * 0.75f) * envelope
+                            if (i == 0) path2.moveTo(x, y) else path2.lineTo(x, y)
+                        }
+                        drawPath(
+                            path = path2,
+                            color = Color(0xFFE8D5B5).copy(alpha = 0.85f),
+                            style = Stroke(width = 2.dp.toPx())
+                        )
+
+                        // Wave 3: Ambient Under-Harmonic (Lavender)
+                        val path3 = Path()
+                        for (i in 0..pointsCount) {
+                            val x = (width / pointsCount) * i
+                            val progress = x / width
+                            val envelope = kotlin.math.sin(progress * PI.toFloat())
+                            val y = midY + kotlin.math.cos(progress * 3 * PI.toFloat() - phase * 0.8f) * (baseAmp * 0.45f) * envelope
+                            if (i == 0) path3.moveTo(x, y) else path3.lineTo(x, y)
+                        }
+                        drawPath(
+                            path = path3,
+                            color = Color(0xFFD69EFF).copy(alpha = 0.6f),
+                            style = Stroke(width = 1.5.dp.toPx())
+                        )
+                    }
+
+                    // Bottom Telemetry Info Strip
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "48.0 kHz • 24-bit Lossless",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = Color(0xFF8CE8FF).copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = if (isListening) "-12.4 dBFS PEAK" else "-INF dB",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = Color(0xFFE8D5B5).copy(alpha = 0.8f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Dual-Speaker Multi-Turn Transcript Stream
+                Text(
+                    text = "DUAL-SPEAKER MULTI-TURN LOG",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        letterSpacing = 1.1.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE8D5B5)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Turn 1: User (English)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0x228CE8FF))
+                            .border(1.dp, Color(0xFF8CE8FF).copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                            .padding(12.dp)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "SPEAKER A • You (English)",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF8CE8FF)
+                                    )
+                                )
+                                Text(
+                                    text = "10:14:22 AM",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    color = Color.White.copy(alpha = 0.6f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "“Can you verify if this government grant submission requires a verified notary seal before Friday?”",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    // Turn 2: Partner (Spanish)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0x22E8D5B5))
+                            .border(1.dp, Color(0xFFE8D5B5).copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                            .padding(12.dp)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "SPEAKER B • Legal Counselor (Spanish)",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFE8D5B5)
+                                    )
+                                )
+                                IconButton(
+                                    onClick = {
+                                        viewModel.speak("Sí, la solicitud requiere certificación notarial antes del viernes.")
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                        contentDescription = "Speak",
+                                        tint = Color(0xFFE8D5B5),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "“Sí, la solicitud requiere certificación notarial antes del viernes.”",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Phonetics: See, lah soh-lee-see-TOOD reh-kyeh-reh sehr-tee-fee-kah-SYON noh-tah-RYAHL...",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 11.sp,
+                                    fontStyle = FontStyle.Italic
+                                ),
+                                color = Color(0xFFE8D5B5).copy(alpha = 0.85f)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "English: Yes, the application requires notarization before Friday.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                color = Color.White.copy(alpha = 0.75f)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Bottom Action Dock
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Mic Listening Toggle
+                    Button(
+                        onClick = { isListening = !isListening },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isListening) Color(0xFFEF4444) else Color(0xFF8CE8FF),
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isListening) Icons.Filled.Stop else Icons.Filled.Mic,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isListening) "Pause Mic" else "Resume Mic",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Save as Voice Memo Action
+                    Button(
+                        onClick = {
+                            viewModel.saveVoiceMemo(
+                                transcript = "Grant submission notary requirement verified. Due Friday with stamp.",
+                                translated = "Verificación de certificación notarial completada."
+                            )
+                            memoLogged = true
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (memoLogged) Color(0xFF00E676) else Color(0xFFE8D5B5),
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (memoLogged) Icons.Filled.Check else Icons.Filled.BookmarkBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (memoLogged) "Saved" else "Log Memo",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }

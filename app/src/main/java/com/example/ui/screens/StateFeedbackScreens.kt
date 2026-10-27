@@ -108,34 +108,17 @@ fun LoadingStateScreen(
             LifeBridgeBottomBar(currentScreen = "profile", onNavigate = { onBack() })
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(54.dp),
-                color = ElectricCyan,
-                strokeWidth = 4.dp
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Loading...",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "Please wait a moment",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            com.example.ui.components.MiddleScreenTransparentLoader(
+                statusMessage = "Analyzing & Verifying...",
+                subMessage = "Cross-referencing encrypted data enclave",
+                sizeDp = 80.dp,
+                isAnimating = true
             )
         }
     }

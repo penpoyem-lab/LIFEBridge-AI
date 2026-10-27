@@ -79,3 +79,25 @@ fun toJsonStringList(list: List<String>): String {
     list.forEach { arr.put(it) }
     return arr.toString()
 }
+
+data class ExecutiveStats(
+    val pendingDeadlinesCount: Int = 0,
+    val urgentActionTitle: String = "No Pending Deadlines",
+    val urgentActionDate: String = "All tasks on schedule",
+    val safetyScoreAvg: Int = 95,
+    val totalVaultDocs: Int = 0,
+    val voiceMemosCount: Int = 0
+)
+
+data class ComplianceReport(
+    val reportId: String,
+    val timestampFormatted: String,
+    val documentTitle: String,
+    val documentCategory: String,
+    val fullSummary: String,
+    val keyDates: List<String> = emptyList(),
+    val actionItems: List<String> = emptyList(),
+    val digitalFingerprintSha256: String,
+    val verificationSeal: String = "VERIFIED • SECURE HARDWARE ENCLAVE",
+    val complianceOfficerSeal: String = "LIFEBridge Enterprise Integrity Seal #7821"
+)

@@ -161,8 +161,19 @@ fun ScamCheckerScreen(
             )
 
             if (isChecking) {
-                Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = WarningAmber)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .background(Color.Transparent),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MiddleScreenTransparentLoader(
+                        sizeDp = 64.dp,
+                        statusMessage = "Auditing Security Signatures...",
+                        subMessage = "Cross-referencing global threat heuristics",
+                        isAnimating = true
+                    )
                 }
             }
 

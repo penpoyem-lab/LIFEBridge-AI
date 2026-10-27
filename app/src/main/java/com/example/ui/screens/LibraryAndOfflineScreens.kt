@@ -40,6 +40,7 @@ fun DocumentLibraryScreen(
     onNavigate: (String) -> Unit
 ) {
     val documents by viewModel.documents.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     var selectedCategory by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
 
@@ -71,8 +72,36 @@ fun DocumentLibraryScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
 
-                    IconButton(onClick = { onNavigate("offline_kit") }) {
-                        Icon(Icons.Filled.MedicalServices, contentDescription = "Offline Kit", tint = RestrainedMint)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Umbra.copy(alpha = 0.06f))
+                                .clickable { viewModel.refreshAllData() }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                MorphingOrganicBlob(isAnimating = isRefreshing, sizeDp = 14.dp)
+                                Text(
+                                    text = if (isRefreshing) "Syncing..." else "Sync",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Umbra,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        IconButton(onClick = { onNavigate("offline_kit") }) {
+                            Icon(Icons.Filled.MedicalServices, contentDescription = "Offline Kit", tint = RestrainedMint)
+                        }
                     }
                 }
 
@@ -123,50 +152,55 @@ fun DocumentLibraryScreen(
             )
         }
     ) { padding ->
-        if (filteredDocs.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Filled.FolderOpen,
-                        contentDescription = null,
-                        tint = TextTertiaryDark,
-                        modifier = Modifier.size(56.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "No documents found",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Scan or import a document to see it here",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+        LiquidGlassPullToRefreshContainer(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refreshAllData() },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (filteredDocs.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Filled.FolderOpen,
+                            contentDescription = null,
+                            tint = TextTertiaryDark,
+                            modifier = Modifier.size(56.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "No documents found",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Scan or import a document to see it here",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .testTag("document_library_list"),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filteredDocs, key = { it.id }) { doc ->
-                    DocumentLibraryCard(
-                        doc = doc,
-                        onClick = { viewModel.selectDocument(doc) },
-                        onFavorite = { viewModel.toggleDocumentFavorite(doc.id) },
-                        onDelete = { viewModel.deleteDocument(doc.id) }
-                    )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("document_library_list"),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredDocs, key = { it.id }) { doc ->
+                        DocumentLibraryCard(
+                            doc = doc,
+                            onClick = { viewModel.selectDocument(doc) },
+                            onFavorite = { viewModel.toggleDocumentFavorite(doc.id) },
+                            onDelete = { viewModel.deleteDocument(doc.id) }
+                        )
+                    }
                 }
             }
         }

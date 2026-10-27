@@ -18,8 +18,8 @@ interface DocumentDao {
     @Query("SELECT * FROM documents WHERE title LIKE '%' || :query || '%' OR summary LIKE '%' || :query || '%' OR originalText LIKE '%' || :query || '%'")
     fun searchDocuments(query: String): Flow<List<DocumentEntity>>
 
-    @Query("SELECT * FROM documents WHERE category = :category ORDER BY createdAt DESC")
-    fun getDocumentsByCategory(category: String): Flow<List<DocumentEntity>>
+    @Query("SELECT * FROM documents ORDER BY createdAt DESC LIMIT 8")
+    suspend fun getRecentDocumentsSync(): List<DocumentEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDocument(doc: DocumentEntity)
@@ -45,8 +45,8 @@ interface ActionCardDao {
     @Query("SELECT * FROM action_cards WHERE documentId = :docId")
     fun getCardsForDocument(docId: String): Flow<List<ActionCardEntity>>
 
-    @Query("SELECT * FROM action_cards WHERE id = :id LIMIT 1")
-    suspend fun getCardById(id: String): ActionCardEntity?
+    @Query("SELECT * FROM action_cards WHERE isCompleted = 0 ORDER BY createdAt DESC LIMIT 8")
+    suspend fun getPendingCardsSync(): List<ActionCardEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCard(card: ActionCardEntity)
